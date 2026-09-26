@@ -4,6 +4,7 @@ import { useDropzone } from "react-dropzone";
 import type { FileRejection } from "react-dropzone";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { Upload } from "lucide-react";
 import { ACCEPTED_MIME_TYPES, MAX_FILE_SIZE_BYTES, validateFile } from "@documind/shared";
 import { useActiveDoc } from "@/lib/store";
 
@@ -11,6 +12,7 @@ const MAX_MB = Math.round(MAX_FILE_SIZE_BYTES / (1024 * 1024));
 
 const ACCEPT = Object.fromEntries(ACCEPTED_MIME_TYPES.map((m) => [m, []]));
 
+/** Campo 1 del talonario: la hoja espera su original. */
 export function UploadDropzone() {
   const t = useTranslations("upload");
   const locale = useLocale();
@@ -50,32 +52,38 @@ export function UploadDropzone() {
   return (
     <div
       {...getRootProps()}
-      className={`w-full max-w-[660px] cursor-pointer rounded-[18px] border px-8 py-14 text-center transition ${
-        isDragActive ? "border-border-accent bg-accent-soft" : "border-border bg-glass"
-      }`}
-      style={{ boxShadow: "var(--glow)" }}
+      className="w-full cursor-pointer rounded-[3px] border-[1.5px] border-rule bg-sheet outline-offset-2 focus-visible:outline-2 focus-visible:outline-accent"
     >
       <input {...getInputProps()} aria-label={t("browse")} />
-      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#E37BEA,#7C5CFF)] text-2xl">
-        ⬆
+      <div className="flex h-[30px] items-center border-b border-rule bg-band px-3.5">
+        <span className="font-display text-[11.5px] font-bold uppercase tracking-[1.4px] text-rule">
+          {t("field1")}
+        </span>
       </div>
-      <p className="text-[16px] font-medium text-text">{t("dropTitle")}</p>
-      <p className="mt-1.5 text-[14px] text-text-2">{t("browse")}</p>
-      <div className="mt-5 flex items-center justify-center gap-2">
-        {["JPG", "PNG", "WEBP", "PDF"].map((f) => (
-          <span
-            key={f}
-            className="rounded-lg border border-border bg-surface px-2.5 py-1 font-mono text-[11px] text-text-2"
-          >
-            {f}
-          </span>
-        ))}
+      <div
+        className={`flex h-[236px] flex-col items-center justify-center gap-2.5 border-[1.5px] border-dashed transition ${
+          isDragActive ? "border-accent bg-accent-soft" : "border-drop m-[10px] border-rule/50"
+        }`}
+      >
+        <Upload size={30} strokeWidth={1.6} className="text-accent" />
+        <p className="font-mono text-[13px] font-bold tracking-[1.2px] text-text">{t("dropTitle")}</p>
+        <p className="font-mono text-[12.5px] text-text-2">{t("browse")}</p>
+        <div className="mt-1 flex gap-2">
+          {["JPG", "PNG", "WEBP", "PDF"].map((f) => (
+            <span
+              key={f}
+              className="rounded-[2px] border border-rule-soft px-2.5 py-[3px] font-mono text-[9.5px] text-rule"
+            >
+              {f}
+            </span>
+          ))}
+        </div>
+        {error && (
+          <p role="alert" className="font-mono text-[12px] font-bold text-accent">
+            {error}
+          </p>
+        )}
       </div>
-      {error && (
-        <p role="alert" className="mt-4 text-[13px] text-red-400">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

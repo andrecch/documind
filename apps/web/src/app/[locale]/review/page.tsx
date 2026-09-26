@@ -4,9 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { SAMPLE_EXTRACTION } from "@documind/shared";
 import { DocumentPreview } from "@/components/document-preview";
-import { JsonPanel } from "@/components/json-panel";
+import { ExtractionSheet } from "@/components/extraction-sheet";
 import { Navbar } from "@/components/navbar";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useActiveDoc } from "@/lib/store";
 
 export default function ReviewPage() {
@@ -34,25 +33,16 @@ export default function ReviewPage() {
                 clear();
                 router.push(`/${locale}`);
               }}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text-2"
+              className="flex h-9 w-9 items-center justify-center rounded-[3px] border border-rule-soft font-mono text-[13px] font-bold text-text-2 transition hover:border-rule hover:text-rule"
             >
               ←
             </button>
-            <span className="text-[14px] font-medium text-text">{doc.name}</span>
-            <span className="flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-[12px] text-[color:var(--success)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--success)]" />
-              {t("status")}
-            </span>
           </>
         }
       />
       <div className="flex h-[calc(100dvh-64px)] flex-col md:flex-row">
-        <div className="h-full flex-1">
-          <DocumentPreview doc={doc} />
-        </div>
-        <div className="h-full flex-1">
-          <JsonPanel value={SAMPLE_EXTRACTION} />
-        </div>
+        <DocumentPreview doc={doc} />
+        <ExtractionSheet value={SAMPLE_EXTRACTION} docName={doc.name} />
       </div>
     </main>
   );
