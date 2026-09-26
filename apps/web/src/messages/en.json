@@ -1,0 +1,25 @@
+{
+  "theme": { "toLight": "Switch to light theme", "toDark": "Switch to dark theme" },
+  "nav": { "brand": "DocuMind", "settings": "Settings" },
+  "upload": {
+    "badge": "VISION LLM · FREE TIER",
+    "title": "From document to data, in a single gesture",
+    "subtitle": "Upload an image or PDF. The vision LLM will detect the document type and return its data as ready-to-use JSON.",
+    "dropTitle": "Drag your document here",
+    "browse": "or click to browse your files",
+    "caption": "Max {{maxMb}} MB per file · Private processing",
+    "unsupported": "Unsupported format. Use JPG, PNG, WEBP or PDF.",
+    "tooLarge": "File exceeds {{maxMb}} MB."
+  },
+  "review": {
+    "back": "Back",
+    "status": "Extraction ready",
+    "panel": "EXTRACTION",
+    "copy": "Copy JSON",
+    "copied": "Copied!",
+    "download": "Download .json",
+    "page": "Page {{page}} / {{total}}",
+    "zoom": "100% · Fit",
+    "empty": "No active document. Upload one to get started."
+  }
+}

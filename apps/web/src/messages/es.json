@@ -1,0 +1,25 @@
+{
+  "theme": { "toLight": "Cambiar a tema claro", "toDark": "Cambiar a tema oscuro" },
+  "nav": { "brand": "DocuMind", "settings": "Ajustes" },
+  "upload": {
+    "badge": "IA DE VISIÓN · TIER GRATIS",
+    "title": "De documento a datos, en un solo gesto",
+    "subtitle": "Sube una imagen o PDF. La IA de visión detectará el tipo de documento y devolverá sus datos en JSON, listos para usar.",
+    "dropTitle": "Arrastra tu documento aquí",
+    "browse": "o haz clic para explorar tus archivos",
+    "caption": "Máx. {{maxMb}} MB por archivo · Procesamiento privado",
+    "unsupported": "Formato no admitido. Usa JPG, PNG, WEBP o PDF.",
+    "tooLarge": "El archivo supera {{maxMb}} MB."
+  },
+  "review": {
+    "back": "Volver",
+    "status": "Extracción lista",
+    "panel": "EXTRACCIÓN",
+    "copy": "Copiar JSON",
+    "copied": "¡Copiado!",
+    "download": "Descargar .json",
+    "page": "Página {{page}} / {{total}}",
+    "zoom": "100% · Ajustar",
+    "empty": "No hay documento activo. Sube uno para comenzar."
+  }
+}
