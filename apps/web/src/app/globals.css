@@ -1,37 +1,80 @@
 @import "tailwindcss";
 
+/* Mundo «Talonario» — claro por defecto (escena: oficina de día).
+   Hoja preimpresa: papel #FDFCF8, retícula azul #2E4E9E, tinta carbón #26231E,
+   serial rojo #C03A2B, verde verificación #3D7A4E, carbón #26231E. */
 :root {
-  --bg: #F7F4FB; --bg-2: #EFEAF6;
-  --surface: #FFFFFF; --glass: rgba(255, 255, 255, 0.75);
-  --border: #E7E2F0; --border-accent: #C855F5;
-  --text: #241B30; --text-2: #6E6480; --text-3: #9C93AD;
-  --accent: #7C5CFF; --accent-2: #C855F5;
-  --accent-soft: rgba(124, 92, 255, 0.12);
-  --success: #0E9F6E;
-  --json-key: #7A5ACC; --json-string: #9A6B1F; --json-number: #0E7490; --json-punct: #9C93AD;
-  --glow: 0 18px 80px rgba(200, 85, 245, 0.18);
+  --bg: #F7F4EA;
+  --sheet: #FDFCF8;
+  --band: #EEF1F8;
+  --rule: #2E4E9E;
+  --rule-soft: #C9D2E8;
+  --border: #E2DFD2;
+  --border-accent: #2E4E9E;
+  --text: #26231E;
+  --text-2: #55503F;
+  --text-3: #8A94B8;
+  --accent: #C03A2B;
+  --accent-soft: #F7E4E1;
+  --success: #3D7A4E;
+  --carbon: #26231E;
+  --carbon-text: #D8D2C6;
+  --carbon-soft: #8FB8A6;
+  --carbon-key: #9AE3C8;
+  --carbon-number: #F0B86B;
+  --glow: none;
+  --drop-ring: rgba(46, 78, 158, 0.35);
 }
 
+/* Derivado nocturno «taller de carbón»: hoja de carbón, tinta clara. */
 .dark {
-  --bg: #0C0813; --bg-2: #170E23;
-  --surface: #130C1F; --glass: rgba(255, 255, 255, 0.05);
-  --border: rgba(255, 255, 255, 0.08); --border-accent: rgba(200, 85, 245, 0.4);
-  --text: #F5F2FA; --text-2: #B3A9C9; --text-3: #8D82A8;
-  --accent: #7C5CFF; --accent-2: #C855F5;
-  --accent-soft: rgba(200, 85, 245, 0.15);
-  --success: #5FE0A8;
-  --json-key: #C98BFF; --json-string: #5FE0A8; --json-number: #F0B86B; --json-punct: #6E6480;
-  --glow: 0 18px 80px rgba(200, 85, 245, 0.18);
+  --bg: #14110C;
+  --sheet: #26231E;
+  --band: #33302A;
+  --rule: #7A93C9;
+  --rule-soft: #4A4A44;
+  --border: #3B372F;
+  --border-accent: #7A93C9;
+  --text: #F5EFE2;
+  --text-2: #C0B8A4;
+  --text-3: #8A8177;
+  --accent: #D95A4A;
+  --accent-soft: rgba(217, 90, 74, 0.16);
+  --success: #7BC98F;
+  --carbon: #0E0D0B;
+  --carbon-text: #D8D2C6;
+  --carbon-soft: #8FB8A6;
+  --carbon-key: #9AE3C8;
+  --carbon-number: #F0B86B;
+  --glow: none;
 }
 
 @theme inline {
-  --color-bg: var(--bg); --color-bg-2: var(--bg-2);
-  --color-surface: var(--surface); --color-glass: var(--glass);
-  --color-border: var(--border); --color-border-accent: var(--border-accent);
-  --color-text: var(--text); --color-text-2: var(--text-2); --color-text-3: var(--text-3);
-  --color-accent: var(--accent); --color-accent-2: var(--accent-2);
-  --color-accent-soft: var(--accent-soft); --color-success: var(--success);
-  --font-display: var(--font-display); --font-body: var(--font-body); --font-mono: var(--font-mono);
+  --color-bg: var(--bg);
+  --color-sheet: var(--sheet);
+  --color-band: var(--band);
+  --color-rule: var(--rule);
+  --color-rule-soft: var(--rule-soft);
+  --color-border: var(--border);
+  --color-border-accent: var(--border-accent);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-carbon: var(--carbon);
+  --color-carbon-text: var(--carbon-text);
+  --color-carbon-soft: var(--carbon-soft);
+  --color-carbon-key: var(--carbon-key);
+  --color-carbon-number: var(--carbon-number);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
 }
 
-body { background: var(--bg); color: var(--text); font-family: var(--font-body), system-ui, sans-serif; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), "Archivo Narrow", system-ui, sans-serif;
+}

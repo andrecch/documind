@@ -3,17 +3,17 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { ThemeProvider } from "next-themes";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Archivo_Narrow, Courier_Prime } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
-const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", weight: ["500", "700"] });
-const body = Inter({ subsets: ["latin"], variable: "--font-body" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const display = Archivo_Narrow({ subsets: ["latin"], variable: "--font-display", weight: ["400", "500", "600", "700"] });
+const body = Archivo_Narrow({ subsets: ["latin"], variable: "--font-body", weight: ["400", "500", "600"] });
+const mono = Courier_Prime({ subsets: ["latin"], variable: "--font-mono", weight: ["400", "700"] });
 
 export const metadata: Metadata = {
   title: "DocuMind",
-  description: "From document to data, in a single gesture",
+  description: "De documento a datos, en un solo gesto",
 };
 
 type Props = { children: React.ReactNode; params: Promise<{ locale: string }> };
@@ -30,7 +30,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     >
       <body className="min-h-dvh antialiased flex flex-col">
         <NextIntlClientProvider>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             {children}
           </ThemeProvider>
         </NextIntlClientProvider>
