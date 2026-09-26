@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { ThemeProvider } from "next-themes";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
@@ -28,7 +29,11 @@ export default async function LocaleLayout({ children, params }: Props) {
       className={`${display.variable} ${body.variable} ${mono.variable}`}
     >
       <body className="min-h-dvh antialiased flex flex-col">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+            {children}
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

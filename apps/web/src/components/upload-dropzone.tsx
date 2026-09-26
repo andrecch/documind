@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import type { FileRejection } from "react-dropzone";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { ACCEPTED_MIME_TYPES, MAX_FILE_SIZE_BYTES, validateFile } from "@documind/shared";
@@ -18,17 +19,23 @@ export function UploadDropzone() {
   const [error, setError] = useState<string | null>(null);
 
   const onDrop = useCallback(
-    (files: File[]) => {
+    (files: File[], rejections: FileRejection[]) => {
       setError(null);
       const file = files[0];
-      if (!file) return;
-      const result = validateFile(file);
-      if (!result.ok) {
-        setError(result.error === "file-too-large" ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"));
+      if (file) {
+        const result = validateFile(file);
+        if (!result.ok) {
+          setError(result.error === "file-too-large" ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"));
+          return;
+        }
+        set({ name: file.name, mime: file.type, size: file.size, objectUrl: URL.createObjectURL(file) });
+        router.push(`/${locale}/review`);
         return;
       }
-      set({ name: file.name, mime: file.type, size: file.size, objectUrl: URL.createObjectURL(file) });
-      router.push(`/${locale}/review`);
+      const rejection = rejections[0];
+      if (!rejection) return;
+      const codes = rejection.errors.map((e) => e.code);
+      setError(codes.includes("file-too-large") ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"));
     },
     [set, router, locale, t]
   );
