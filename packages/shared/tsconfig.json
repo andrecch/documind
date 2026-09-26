@@ -1,1 +1,1 @@
-﻿{"compilerOptions": {"strict": true, "target": "ES2022", "module": "ESNext", "moduleResolution": "bundler", "skipLibCheck": true, "noEmit": true}, "include": ["src"]}
+{"compilerOptions": {"strict": true, "target": "ES2022", "module": "ESNext", "moduleResolution": "bundler", "skipLibCheck": true, "noEmit": true}, "include": ["src"]}
