@@ -1,15 +1,15 @@
-# M0 — UI Inicial (Scaffold + Upload + Revisión) — Plan de Implementación
+﻿# M0 â€” UI Inicial (Scaffold + Upload + RevisiÃ³n) â€” Plan de ImplementaciÃ³n
 
-> **For agentic workers:** REQUIRED SUB-SKILL: usa la skill local `executing-plans` para ejecutar este plan tarea por tarea. Steps con checkbox (`- [ ]`).
-> **Nota de commits:** cada task tiene su paso de commit; si ejecutas en esta sesión, confirma con el usuario antes de ejecutarlos (regla del proyecto).
+> **For agentic workers:** REQUIRED SUB-SKILL: usa la skill local `executing-plans` para ejecutar este plan tarea por tarea. Steps con checkbox (`- [x]`).
+> **Nota de commits:** cada task tiene su paso de commit; si ejecutas en esta sesiÃ³n, confirma con el usuario antes de ejecutarlos (regla del proyecto).
 
-**Goal:** Scaffold del monorepo + infraestructura Docker (Postgres/pgvector) + pantallas «Subir» (drag & drop clickeable) y «Revisión» (preview + JSON) en Dark Aurora, con i18n es/en y tema dark/light. Sin integración LLM.
+**Goal:** Scaffold del monorepo + infraestructura Docker (Postgres/pgvector) + pantallas Â«SubirÂ» (drag & drop clickeable) y Â«RevisiÃ³nÂ» (preview + JSON) en Dark Aurora, con i18n es/en y tema dark/light. Sin integraciÃ³n LLM.
 
-**Architecture:** Monorepo pnpm/Turborepo; `apps/web` (Next.js 15 App Router) consume `@documind/shared` (Zod: tipos de documento, validación de archivos, resultado de extracción). El documento subido vive en memoria (zustand) y la navegación `/ → /review` es cliente. Docker Compose levanta `pgvector/pgvector:pg16` para las fases M1/M2.
+**Architecture:** Monorepo pnpm/Turborepo; `apps/web` (Next.js 15 App Router) consume `@documind/shared` (Zod: tipos de documento, validaciÃ³n de archivos, resultado de extracciÃ³n). El documento subido vive en memoria (zustand) y la navegaciÃ³n `/ â†’ /review` es cliente. Docker Compose levanta `pgvector/pgvector:pg16` para las fases M1/M2.
 
-**Tech Stack:** pnpm 10 · Turborepo 2 · Next.js 15 + React 19 · TypeScript strict · Tailwind v4 (tokens CSS) · next-intl · next-themes · zustand · react-dropzone · pdfjs-dist@4 · Vitest · Playwright · Docker Compose (Postgres 16 + pgvector).
+**Tech Stack:** pnpm 10 Â· Turborepo 2 Â· Next.js 15 + React 19 Â· TypeScript strict Â· Tailwind v4 (tokens CSS) Â· next-intl Â· next-themes Â· zustand Â· react-dropzone Â· pdfjs-dist@4 Â· Vitest Â· Playwright Â· Docker Compose (Postgres 16 + pgvector).
 
-**Ref visual:** `docs/DESIGN.md` (tokens) y artboards OpenPencil «C1/C2 · Dark aurora».
+**Ref visual:** `docs/DESIGN.md` (tokens) y artboards OpenPencil Â«C1/C2 Â· Dark auroraÂ».
 
 ---
 
@@ -37,7 +37,7 @@ apps/web/playwright.config.ts
 
 **Files:** Create `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `docs/plans/` (ya existe)
 
-- [ ] **Step 1: Raíz del workspace** — crear `pnpm-workspace.yaml`:
+- [x] **Step 1: RaÃ­z del workspace** â€” crear `pnpm-workspace.yaml`:
 
 ```yaml
 packages:
@@ -45,7 +45,7 @@ packages:
   - packages/*
 ```
 
-- [ ] **Step 2:** crear `turbo.json`:
+- [x] **Step 2:** crear `turbo.json`:
 
 ```json
 {
@@ -61,7 +61,7 @@ packages:
 }
 ```
 
-- [ ] **Step 3:** crear `package.json` raíz:
+- [x] **Step 3:** crear `package.json` raÃ­z:
 
 ```json
 {
@@ -81,21 +81,21 @@ packages:
 }
 ```
 
-- [ ] **Step 4:** añadir a `.gitignore` (append): `.turbo`, `.next`, `dist`, `coverage`, `test-results`, `playwright-report`, `uploads`.
+- [x] **Step 4:** aÃ±adir a `.gitignore` (append): `.turbo`, `.next`, `dist`, `coverage`, `test-results`, `playwright-report`, `uploads`.
 
 ```powershell
 Add-Content .gitignore "`n.turbo`n.next`ndist`ncoverage`ntest-results`nplaywright-report`nuploads"
 ```
 
-- [ ] **Step 5:** instalar y verificar: `pnpm install` (crea lockfile). Comando de verificación: `pnpm exec turbo --version` → imprime versión 2.x.
+- [x] **Step 5:** instalar y verificar: `pnpm install` (crea lockfile). Comando de verificaciÃ³n: `pnpm exec turbo --version` â†’ imprime versiÃ³n 2.x.
 
-- [ ] **Step 6: Commit** `chore: scaffold pnpm+turbo monorepo`
+- [x] **Step 6: Commit** `chore: scaffold pnpm+turbo monorepo`
 
-### Task 2: Docker Compose — PostgreSQL 16 + pgvector
+### Task 2: Docker Compose â€” PostgreSQL 16 + pgvector
 
 **Files:** Create `docker-compose.yml`, `.env.example`
 
-- [ ] **Step 1:** crear `docker-compose.yml`:
+- [x] **Step 1:** crear `docker-compose.yml`:
 
 ```yaml
 services:
@@ -119,32 +119,32 @@ volumes:
   documind_pgdata:
 ```
 
-- [ ] **Step 2:** crear `.env.example`:
+- [x] **Step 2:** crear `.env.example`:
 
 ```bash
-# DocuMind — copiar a .env
+# DocuMind â€” copiar a .env
 # API (M1/M2)
 DATABASE_URL=postgres://documind:documind@localhost:5433/documind
 # Clave maestra de cifrado AES-256-GCM (32 bytes base64): pnpm exec node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 DOCUMIND_MASTER_KEY=
-# LLM (respaldo; la fuente de verdad es la BD vía pantalla de Configuración)
+# LLM (respaldo; la fuente de verdad es la BD vÃ­a pantalla de ConfiguraciÃ³n)
 DOCUMIND_PROVIDER=openrouter
 ```
 
-- [ ] **Step 3: Verificar** — `docker compose up -d`; esperar healthy; luego:
+- [x] **Step 3: Verificar** â€” `docker compose up -d`; esperar healthy; luego:
 
 ```powershell
 docker exec documind-db psql -U documind -d documind -c "CREATE EXTENSION IF NOT EXISTS vector; SELECT extname FROM pg_extension WHERE extname = 'vector';"
 ```
 Esperado: una fila con `vector`.
 
-- [ ] **Step 4: Commit** `chore: add postgres+pgvector docker compose`
+- [x] **Step 4: Commit** `chore: add postgres+pgvector docker compose`
 
-### Task 3: packages/shared — esquemas Zod y validación
+### Task 3: packages/shared â€” esquemas Zod y validaciÃ³n
 
 **Files:** Create `packages/shared/**`
 
-- [ ] **Step 1:** `packages/shared/package.json`:
+- [x] **Step 1:** `packages/shared/package.json`:
 
 ```json
 {
@@ -164,7 +164,7 @@ Esperado: una fila con `vector`.
 }
 ```
 
-- [ ] **Step 2:** `packages/shared/tsconfig.json`:
+- [x] **Step 2:** `packages/shared/tsconfig.json`:
 
 ```json
 {
@@ -176,7 +176,7 @@ Esperado: una fila con `vector`.
 }
 ```
 
-- [ ] **Step 3:** escribir los tests primero — `packages/shared/src/file-validation.test.ts`:
+- [x] **Step 3:** escribir los tests primero â€” `packages/shared/src/file-validation.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -185,7 +185,7 @@ import { extractionResultSchema, SAMPLE_EXTRACTION } from "./extraction";
 import { DOCUMENT_TYPES } from "./document-types";
 
 describe("validateFile", () => {
-  it("acepta image/png dentro del límite", () => {
+  it("acepta image/png dentro del lÃ­mite", () => {
     expect(validateFile({ type: "image/png", size: 1024 })).toEqual({ ok: true, error: null });
   });
   it("rechaza tipos no admitidos", () => {
@@ -201,7 +201,7 @@ describe("validateFile", () => {
 });
 
 describe("extractionResultSchema", () => {
-  it("parsea la extracción de muestra", () => {
+  it("parsea la extracciÃ³n de muestra", () => {
     expect(extractionResultSchema.parse(SAMPLE_EXTRACTION).tipo_documento).toBe("factura");
   });
   it("rechaza un tipo de documento desconocido", () => {
@@ -216,15 +216,15 @@ describe("extractionResultSchema", () => {
 });
 ```
 
-- [ ] **Step 4:** crear el package (deps) y correr tests para verlos FALLAR:
+- [x] **Step 4:** crear el package (deps) y correr tests para verlos FALLAR:
 
 ```powershell
 pnpm install
 pnpm --filter @documind/shared test
 ```
-Esperado: FAIL — no existe `./file-validation`.
+Esperado: FAIL â€” no existe `./file-validation`.
 
-- [ ] **Step 5:** implementación mínima.
+- [x] **Step 5:** implementaciÃ³n mÃ­nima.
 
 `packages/shared/src/document-types.ts`:
 ```ts
@@ -289,14 +289,14 @@ export const SAMPLE_EXTRACTION: ExtractionResult = {
   impuestos: 465500,
   total: 2915500,
   items: [
-    { concepto: "Instalación eléctrica", cantidad: 1, valor: 890000 },
+    { concepto: "InstalaciÃ³n elÃ©ctrica", cantidad: 1, valor: 890000 },
     { concepto: "Materiales", cantidad: 12, valor: 130000 },
   ],
   confianza: 0.97,
 };
 ```
 
-`packages/shared/src/llm.ts` (contrato para M1/M2 — se compila, no se usa aún):
+`packages/shared/src/llm.ts` (contrato para M1/M2 â€” se compila, no se usa aÃºn):
 ```ts
 export type ProviderModel = { id: string; label: string; free: boolean; contextLength?: number };
 export type VisionInput = { imageBase64: string; mimeType: string } | { pdfBase64: string };
@@ -319,21 +319,21 @@ export * from "./extraction";
 export * from "./llm";
 ```
 
-- [ ] **Step 6:** correr tests: `pnpm --filter @documind/shared test` → **PASS (9 tests)**.
+- [x] **Step 6:** correr tests: `pnpm --filter @documind/shared test` â†’ **PASS (9 tests)**.
 
-- [ ] **Step 7: Commit** `feat: shared schemas for doc types, file validation and extraction`
+- [x] **Step 7: Commit** `feat: shared schemas for doc types, file validation and extraction`
 
 ### Task 4: Scaffold Next.js + dependencias
 
 **Files:** Create `apps/web/**` (via create-next-app)
 
-- [ ] **Step 1: Scaffold** (en la raíz):
+- [x] **Step 1: Scaffold** (en la raÃ­z):
 
 ```powershell
 pnpm dlx create-next-app@15 apps/web --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-pnpm --yes
 ```
 
-- [ ] **Step 2: Dependencias** del workspace y de UI:
+- [x] **Step 2: Dependencias** del workspace y de UI:
 
 ```powershell
 pnpm --filter web add @documind/shared@workspace:*
@@ -342,7 +342,7 @@ pnpm --filter web add pdfjs-dist@^4
 pnpm --filter web add -D @playwright/test
 ```
 
-- [ ] **Step 3: Verificar** — `pnpm --filter web dev` arranca en http://localhost:3000 (Ctrl+C para parar). En `apps/web/package.json` añadir scripts:
+- [x] **Step 3: Verificar** â€” `pnpm --filter web dev` arranca en http://localhost:3000 (Ctrl+C para parar). En `apps/web/package.json` aÃ±adir scripts:
 
 ```json
 "e2e": "playwright test",
@@ -351,13 +351,13 @@ pnpm --filter web add -D @playwright/test
 existentes: "build", "dev", "lint", "start"
 ```
 
-- [ ] **Step 4: Commit** `chore: scaffold next.js web app`
+- [x] **Step 4: Commit** `chore: scaffold next.js web app`
 
 ### Task 5: Tokens Aurora + fuentes + tema
 
 **Files:** Modify `apps/web/src/app/globals.css`, `apps/web/src/app/layout.tsx`; Create `apps/web/src/components/theme-toggle.tsx`
 
-- [ ] **Step 1:** reemplazar `apps/web/src/app/globals.css` con tokens (dark default, light derivado):
+- [x] **Step 1:** reemplazar `apps/web/src/app/globals.css` con tokens (dark default, light derivado):
 
 ```css
 @import "tailwindcss";
@@ -399,7 +399,7 @@ existentes: "build", "dev", "lint", "start"
 body { background: var(--bg); color: var(--text); font-family: var(--font-body), system-ui, sans-serif; }
 ```
 
-- [ ] **Step 2:** fuentes en `apps/web/src/app/layout.tsx` (por ahora el layout básico de Next) — imports:
+- [x] **Step 2:** fuentes en `apps/web/src/app/layout.tsx` (por ahora el layout bÃ¡sico de Next) â€” imports:
 
 ```tsx
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
@@ -410,7 +410,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 ```
 y en `<html className={\`${display.variable} ${body.variable} ${mono.variable}\`}>`.
 
-- [ ] **Step 3:** `apps/web/src/components/theme-toggle.tsx`:
+- [x] **Step 3:** `apps/web/src/components/theme-toggle.tsx`:
 
 ```tsx
 "use client";
@@ -432,21 +432,21 @@ export function ThemeToggle() {
       onClick={() => setTheme(dark ? "light" : "dark")}
       className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text-2 transition hover:text-text focus-visible:outline-2 focus-visible:outline-accent"
     >
-      {dark ? "☀" : "☾"}
+      {dark ? "â˜€" : "â˜¾"}
     </button>
   );
 }
 ```
 
-- [ ] **Step 4: Verificar** — el build compila: `pnpm --filter web build` → success (los tokens aún no se visualizan; se verán en los tasks 7–8).
+- [x] **Step 4: Verificar** â€” el build compila: `pnpm --filter web build` â†’ success (los tokens aÃºn no se visualizan; se verÃ¡n en los tasks 7â€“8).
 
-- [ ] **Step 5: Commit** `feat: aurora design tokens, fonts and theme toggle`
+- [x] **Step 5: Commit** `feat: aurora design tokens, fonts and theme toggle`
 
-### Task 6: i18n (next-intl · es/en)
+### Task 6: i18n (next-intl Â· es/en)
 
-**Files:** Create `apps/web/src/i18n/*`, `apps/web/src/messages/*`, `apps/web/src/middleware.ts`; Modify `apps/web/next.config.ts`, layout; Move `app/page.tsx` → `app/[locale]/page.tsx`
+**Files:** Create `apps/web/src/i18n/*`, `apps/web/src/messages/*`, `apps/web/src/middleware.ts`; Modify `apps/web/next.config.ts`, layout; Move `app/page.tsx` â†’ `app/[locale]/page.tsx`
 
-- [ ] **Step 1:** `apps/web/src/i18n/routing.ts`:
+- [x] **Step 1:** `apps/web/src/i18n/routing.ts`:
 
 ```ts
 import { defineRouting } from "next-intl/routing";
@@ -481,14 +481,14 @@ export default createMiddleware(routing);
 export const config = { matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"] };
 ```
 
-`apps/web/next.config.ts` — envolver con el plugin:
+`apps/web/next.config.ts` â€” envolver con el plugin:
 ```ts
 import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin();
-// export default withNextIntl(nextConfig) — conservar el objeto existente
+// export default withNextIntl(nextConfig) â€” conservar el objeto existente
 ```
 
-- [ ] **Step 2:** mensajes completos.
+- [x] **Step 2:** mensajes completos.
 
 `apps/web/src/messages/es.json`:
 ```json
@@ -496,36 +496,36 @@ const withNextIntl = createNextIntlPlugin();
   "theme": { "toLight": "Cambiar a tema claro", "toDark": "Cambiar a tema oscuro" },
   "nav": { "brand": "DocuMind", "settings": "Ajustes" },
   "upload": {
-    "badge": "IA DE VISIÓN · TIER GRATIS",
+    "badge": "IA DE VISIÃ“N Â· TIER GRATIS",
     "title": "De documento a datos, en un solo gesto",
-    "subtitle": "Sube una imagen o PDF. La IA de visión detectará el tipo de documento y devolverá sus datos en JSON, listos para usar.",
-    "dropTitle": "Arrastra tu documento aquí",
+    "subtitle": "Sube una imagen o PDF. La IA de visiÃ³n detectarÃ¡ el tipo de documento y devolverÃ¡ sus datos en JSON, listos para usar.",
+    "dropTitle": "Arrastra tu documento aquÃ­",
     "browse": "o haz clic para explorar tus archivos",
-    "caption": "Máx. {{maxMb}} MB por archivo · Procesamiento privado",
+    "caption": "MÃ¡x. {{maxMb}} MB por archivo Â· Procesamiento privado",
     "unsupported": "Formato no admitido. Usa JPG, PNG, WEBP o PDF.",
     "tooLarge": "El archivo supera {{maxMb}} MB."
   },
   "review": {
     "back": "Volver",
-    "status": "Extracción lista",
-    "panel": "EXTRACCIÓN",
+    "status": "ExtracciÃ³n lista",
+    "panel": "EXTRACCIÃ“N",
     "copy": "Copiar JSON",
-    "copied": "¡Copiado!",
+    "copied": "Â¡Copiado!",
     "download": "Descargar .json",
-    "page": "Página {{page}} / {{total}}",
-    "zoom": "100% · Ajustar",
+    "page": "PÃ¡gina {{page}} / {{total}}",
+    "zoom": "100% Â· Ajustar",
     "empty": "No hay documento activo. Sube uno para comenzar."
   }
 }
 ```
 
-`apps/web/src/messages/en.json`: estructura idéntica con:
+`apps/web/src/messages/en.json`: estructura idÃ©ntica con:
 ```json
 {
   "theme": { "toLight": "Switch to light theme", "toDark": "Switch to dark theme" },
   "nav": { "brand": "DocuMind", "settings": "Settings" },
   "upload": {
-    "badge": "VISION LLM · FREE TIER",
+    "badge": "VISION LLM Â· FREE TIER",
     "title": "From document to data, in a single gesture",
     "subtitle": "Upload an image or PDF. The vision LLM will detect the document type and return its data as ready-to-use JSON.",
     "dropTitle": "Drag your document here",
@@ -536,14 +536,14 @@ const withNextIntl = createNextIntlPlugin();
   "review": {
     "back": "Back", "status": "Extraction ready", "panel": "EXTRACTION",
     "copy": "Copy JSON", "copied": "Copied!", "download": "Download .json",
-    "page": "Page {{page}} / {{total}}", "zoom": "100% · Fit",
+    "page": "Page {{page}} / {{total}}", "zoom": "100% Â· Fit",
     "empty": "No active document. Upload one to get started."
   }
 }
 ```
-(«review.caption» usa la misma frase que «upload.caption»).
+(Â«review.captionÂ» usa la misma frase que Â«upload.captionÂ»).
 
-- [ ] **Step 3:** reestructurar app: mover `apps/web/src/app/page.tsx` a `apps/web/src/app/[locale]/page.tsx` (se reescribe en Task 7) y crear `apps/web/src/app/[locale]/layout.tsx`:
+- [x] **Step 3:** reestructurar app: mover `apps/web/src/app/page.tsx` a `apps/web/src/app/[locale]/page.tsx` (se reescribe en Task 7) y crear `apps/web/src/app/[locale]/layout.tsx`:
 
 ```tsx
 import { NextIntlClientProvider, hasLocale } from "next-intl";
@@ -569,15 +569,15 @@ export default async function LocaleLayout({ children, params }: Props) {
 ```
 (borrar `apps/web/src/app/layout.tsx`, `app/page.tsx` y `app/favicon.ico` se conserva en `app/`).
 
-- [ ] **Step 4: Verificar** — `pnpm --filter web build` → success; `http://localhost:3101/es` redirige desde `/` (middleware).
+- [x] **Step 4: Verificar** â€” `pnpm --filter web build` â†’ success; `http://localhost:3101/es` redirige desde `/` (middleware).
 
-- [ ] **Step 5: Commit** `feat: next-intl es/en routing and messages`
+- [x] **Step 5: Commit** `feat: next-intl es/en routing and messages`
 
-### Task 7: Página «Subir» (dropzone clickeable + store)
+### Task 7: PÃ¡gina Â«SubirÂ» (dropzone clickeable + store)
 
 **Files:** Create `apps/web/src/lib/store.ts`, `apps/web/src/components/navbar.tsx`, `apps/web/src/components/upload-dropzone.tsx`; Modify `apps/web/src/app/[locale]/page.tsx`
 
-- [ ] **Step 1:** `apps/web/src/lib/store.ts`:
+- [x] **Step 1:** `apps/web/src/lib/store.ts`:
 
 ```ts
 import { create } from "zustand";
@@ -599,7 +599,7 @@ export const useActiveDoc = create<ActiveDocState>((set) => ({
 }));
 ```
 
-- [ ] **Step 2:** `apps/web/src/components/navbar.tsx`:
+- [x] **Step 2:** `apps/web/src/components/navbar.tsx`:
 
 ```tsx
 "use client";
@@ -624,7 +624,7 @@ export function Navbar({ left }: { left?: React.ReactNode }) {
           aria-label={t("settings")}
           className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text-2"
         >
-          ☰
+          â˜°
         </button>
       </div>
     </header>
@@ -632,7 +632,7 @@ export function Navbar({ left }: { left?: React.ReactNode }) {
 }
 ```
 
-- [ ] **Step 3:** `apps/web/src/components/upload-dropzone.tsx`:
+- [x] **Step 3:** `apps/web/src/components/upload-dropzone.tsx`:
 
 ```tsx
 "use client";
@@ -684,7 +684,7 @@ export function UploadDropzone() {
     >
       <input {...getInputProps()} aria-label={t("browse")} />
       <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#E37BEA,#7C5CFF)] text-2xl">
-        ⬆
+        â¬†
       </div>
       <p className="text-[16px] font-medium text-text">{t("dropTitle")}</p>
       <p className="mt-1.5 text-[14px] text-text-2">{t("browse")}</p>
@@ -701,7 +701,7 @@ export function UploadDropzone() {
 }
 ```
 
-- [ ] **Step 4:** reescribir `apps/web/src/app/[locale]/page.tsx`:
+- [x] **Step 4:** reescribir `apps/web/src/app/[locale]/page.tsx`:
 
 ```tsx
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -735,15 +735,15 @@ export default async function UploadPage({ params }: Props) {
 }
 ```
 
-- [ ] **Step 5: Verificar** — `pnpm --filter web dev`; probar en `/es`: arrastrar un PNG → navega a `/es/review` (aún 404 hasta Task 8); soltar un ZIP → mensaje de error. Lint/typecheck: `pnpm --filter web typecheck && pnpm --filter web lint`.
+- [x] **Step 5: Verificar** â€” `pnpm --filter web dev`; probar en `/es`: arrastrar un PNG â†’ navega a `/es/review` (aÃºn 404 hasta Task 8); soltar un ZIP â†’ mensaje de error. Lint/typecheck: `pnpm --filter web typecheck && pnpm --filter web lint`.
 
-- [ ] **Step 6: Commit** `feat: upload page with clickable drag&drop (aurora)`
+- [x] **Step 6: Commit** `feat: upload page with clickable drag&drop (aurora)`
 
-### Task 8: Página «Revisión» (preview + JSON)
+### Task 8: PÃ¡gina Â«RevisiÃ³nÂ» (preview + JSON)
 
 **Files:** Create `apps/web/src/app/[locale]/review/page.tsx`, `apps/web/src/components/document-preview.tsx`, `apps/web/src/components/json-panel.tsx`
 
-- [ ] **Step 1:** `apps/web/src/components/document-preview.tsx` (con render PDF pdf.js):
+- [x] **Step 1:** `apps/web/src/components/document-preview.tsx` (con render PDF pdf.js):
 
 ```tsx
 "use client";
@@ -790,9 +790,9 @@ export function DocumentPreview({ doc }: { doc: ActiveDoc }) {
   );
 }
 ```
-(El paginador «Página 1/N» completo llega con estados; se muestra también el pill con `useTranslations("review.page")` cuando se conocen las páginas.)
+(El paginador Â«PÃ¡gina 1/NÂ» completo llega con estados; se muestra tambiÃ©n el pill con `useTranslations("review.page")` cuando se conocen las pÃ¡ginas.)
 
-- [ ] **Step 2:** `apps/web/src/components/json-panel.tsx` (resaltado de sintaxis + copiar + descargar):
+- [x] **Step 2:** `apps/web/src/components/json-panel.tsx` (resaltado de sintaxis + copiar + descargar):
 
 ```tsx
 "use client";
@@ -800,7 +800,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { ExtractionResult } from "@documind/shared";
 
-/* Tokeniza cada línea JSON para colorearla. */
+/* Tokeniza cada lÃ­nea JSON para colorearla. */
 function renderLine(line: string, ix: number) {
   const re = /"(?:\\.|[^"\\])*"(\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?|./g;
   const out: JSX.Element[] = [];
@@ -855,14 +855,14 @@ export function JsonPanel({ value }: { value: ExtractionResult }) {
       </div>
       <footer className="flex h-10 items-center justify-between border-t border-border px-5 font-mono text-[11px] text-text-3">
         <span>qwen/qwen3.8-27b:free</span>
-        <span>datos de muestra · M0</span>
+        <span>datos de muestra Â· M0</span>
       </footer>
     </section>
   );
 }
 ```
 
-- [ ] **Step 3:** `apps/web/src/app/[locale]/review/page.tsx`:
+- [x] **Step 3:** `apps/web/src/app/[locale]/review/page.tsx`:
 
 ```tsx
 "use client";
@@ -899,7 +899,7 @@ export default function ReviewPage() {
             onClick={() => { clear(); router.push(`/${locale}`); }}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text-2"
           >
-            ←
+            â†
           </button>
           <span className="text-[14px] font-medium text-text">{doc.name}</span>
           <span className="flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-[12px] text-[color:var(--success)]">
@@ -917,22 +917,22 @@ export default function ReviewPage() {
 }
 ```
 
-- [ ] **Step 4: Verificar** — subir una imagen en `/es` → `/es/review` muestra preview a la izquierda y JSON coloreado a la derecha; «Copiar» escribe JSON válido. `pnpm --filter web typecheck && pnpm --filter web lint`.
+- [x] **Step 4: Verificar** â€” subir una imagen en `/es` â†’ `/es/review` muestra preview a la izquierda y JSON coloreado a la derecha; Â«CopiarÂ» escribe JSON vÃ¡lido. `pnpm --filter web typecheck && pnpm --filter web lint`.
 
-- [ ] **Step 5: Commit** `feat: review page with document preview and json panel`
+- [x] **Step 5: Commit** `feat: review page with document preview and json panel`
 
 ### Task 9: E2E smoke (Playwright)
 
 **Files:** Create `apps/web/playwright.config.ts`, `apps/web/e2e/upload.spec.ts`, `apps/web/e2e/fixtures/sample.png`
 
-- [ ] **Step 1:** fixture (PNG 1×1 válido):
+- [x] **Step 1:** fixture (PNG 1Ã—1 vÃ¡lido):
 
 ```powershell
 New-Item -ItemType Directory -Force apps/web/e2e/fixtures | Out-Null
 node -e "require('fs').writeFileSync('apps/web/e2e/fixtures/sample.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64'))"
 ```
 
-- [ ] **Step 2:** `apps/web/playwright.config.ts`:
+- [x] **Step 2:** `apps/web/playwright.config.ts`:
 
 ```ts
 import { defineConfig } from "@playwright/test";
@@ -949,12 +949,12 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3:** `apps/web/e2e/upload.spec.ts`:
+- [x] **Step 3:** `apps/web/e2e/upload.spec.ts`:
 
 ```ts
 import { test, expect } from "@playwright/test";
 
-test("1×1 PNG → /es/review muestra el JSON de muestra", async ({ page }) => {
+test("1Ã—1 PNG â†’ /es/review muestra el JSON de muestra", async ({ page }) => {
   await page.goto("/es");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.locator('input[type="file"]').setInputFiles("e2e/fixtures/sample.png");
@@ -962,7 +962,7 @@ test("1×1 PNG → /es/review muestra el JSON de muestra", async ({ page }) => {
   await expect(page.getByText('"tipo_documento"')).toBeVisible();
   const copyBtn = page.getByRole("button", { name: "Copiar JSON" });
   await copyBtn.click();
-  await expect(page.getByRole("button", { name: "¡Copiado!" } )).toBeVisible();
+  await expect(page.getByRole("button", { name: "Â¡Copiado!" } )).toBeVisible();
 });
 
 test("rechaza un tipo no admitido", async ({ page }) => {
@@ -975,20 +975,20 @@ test("rechaza un tipo no admitido", async ({ page }) => {
 });
 ```
 
-- [ ] **Step 4: Verificar** — `pnpm --filter web e2e:install` (una vez) y `pnpm --filter web e2e` → **2 passed**.
+- [x] **Step 4: Verificar** â€” `pnpm --filter web e2e:install` (una vez) y `pnpm --filter web e2e` â†’ **2 passed**.
 
-- [ ] **Step 5: Commit** `test: e2e smoke for upload and review flow`
+- [x] **Step 5: Commit** `test: e2e smoke for upload and review flow`
 
 ### Task 10: Gates finales
 
-- [ ] **Step 1:** `pnpm lint && pnpm typecheck && pnpm build` a nivel raíz (Turbo ejecuta todo el workspace) → todos PASS.
-- [ ] **Step 2:** comprobar `docker compose ps` → `documind-db` healthy.
-- [ ] **Step 3:** recorrer la app a mano: `/es` (drag & drop + clic + error de tipo), `/en` ídem, toggle de tema, «Copiar»/«Descargar».
-- [ ] **Step 4: Commit** (si quedan alarmas) `chore: m0 final pass` — **y aquí termina M0**.
+- [x] **Step 1:** `pnpm lint && pnpm typecheck && pnpm build` a nivel raÃ­z (Turbo ejecuta todo el workspace) â†’ todos PASS.
+- [x] **Step 2:** comprobar `docker compose ps` â†’ `documind-db` healthy.
+- [x] **Step 3:** recorrer la app a mano: `/es` (drag & drop + clic + error de tipo), `/en` Ã­dem, toggle de tema, Â«CopiarÂ»/Â«DescargarÂ».
+- [x] **Step 4: Commit** (si quedan alarmas) `chore: m0 final pass` â€” **y aquÃ­ termina M0**.
 
 ---
 
 ## Siguientes hitos (fuera de este plan)
 
-- **M1** `apps/api` NestJS: migraciones Drizzle (schema de `docs/ARCHITECTURE.md` §4), `POST /documents`, adapter `OpenRouterProvider` (Qwen3.8 27B `:free` por defecto), endpoint `/extract`.
-- **M2** Pantalla `/settings` (se diseñará en OpenPencil estilo Aurora), cifrado AES-256-GCM de la API key, catálogo free, embeddings Nemotron 3 Embed 1B y `/search`.
+- **M1** `apps/api` NestJS: migraciones Drizzle (schema de `docs/ARCHITECTURE.md` Â§4), `POST /documents`, adapter `OpenRouterProvider` (Qwen3.8 27B `:free` por defecto), endpoint `/extract`.
+- **M2** Pantalla `/settings` (se diseÃ±arÃ¡ en OpenPencil estilo Aurora), cifrado AES-256-GCM de la API key, catÃ¡logo free, embeddings Nemotron 3 Embed 1B y `/search`.
