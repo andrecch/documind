@@ -1,5 +1,7 @@
 import { useTranslations } from "next-intl";
 
+const SAMPLE = '{"tipo_documento": "…", "total": 0, "confianza": 0.00}';
+
 /** Fila inferior de la hoja: perforaciones + copia carbón (estado M0, sin extracción aún). */
 export function CarbonStrip() {
   const t = useTranslations("carbon");
@@ -15,7 +17,7 @@ export function CarbonStrip() {
           <p className="font-display text-[11px] font-bold uppercase tracking-[1.4px] text-carbon-key">
             {t("title")}
           </p>
-          <p className="mt-1 truncate font-mono text-[12px] text-carbon-text">{t("sample")}</p>
+          <p className="mt-1 truncate font-mono text-[12px] text-carbon-text">{SAMPLE}</p>
         </div>
         <p className="ml-6 shrink-0 font-mono text-[10px] uppercase tracking-[1px] text-carbon-soft">
           {t("model")}

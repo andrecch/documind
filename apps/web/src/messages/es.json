@@ -17,25 +17,22 @@
       "emisor": "5 · EMISOR / RECEPTOR",
       "confianza": "6 · CONFIANZA DE LECTURA"
     },
-    "typePlaceholder": "FACTURA",
     "datePlaceholder": "____ / ____ / ________",
     "totalPlaceholder": "$ ________.____",
-    "emisorPlaceholder": "EMISOR  ______________________________",
+    "emisorPlaceholder": "EMISOR   ______________________________",
     "receptorPlaceholder": "RECEPTOR _____________________________",
     "confPlaceholder": "0.____"
   },
   "carbon": {
     "title": "COPIA CARBÓN · DATOS EXTRAÍDOS",
     "hint": "LA COPIA CARBÓN SE ENTREGA AL EXTRAER (M1)",
-    "model": "qwen/qwen3.8-27b:free · lectura pendiente",
-    "sample": "{\"tipo_documento\": \"…\", \"total\": null}"
+    "model": "qwen/qwen3.8-27b:free · lectura pendiente"
   },
   "review": {
     "back": "Volver",
     "status": "LECTURA COMPLETADA",
     "original": "EL ORIGINAL",
     "page": "PÁGINA {page} / {total}",
-    "zoom": "100% · Ajustar",
     "read": "LEÍDO",
     "sheet": "HOJA RELLENADA POR LA IA DE VISIÓN",
     "copy": "COPIAR",

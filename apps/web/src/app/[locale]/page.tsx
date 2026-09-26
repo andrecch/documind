@@ -16,9 +16,9 @@ export default async function UploadPage({ params }: Props) {
       <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-[18px] px-16 pb-8 pt-7">
         <header className="flex items-start justify-between">
           <div>
-            <p className="font-display text-[30px] font-bold leading-[1.05] tracking-[-0.5px] text-text">
+            <h1 className="font-display text-[30px] font-bold leading-[1.05] tracking-[-0.5px] text-text">
               DOCUMIND
-            </p>
+            </h1>
             <p className="mt-1.5 font-display text-[11.5px] font-semibold uppercase tracking-[1.2px] text-text-2">
               {t("upload.sheetTitle")}
             </p>
