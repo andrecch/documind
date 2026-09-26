@@ -2,6 +2,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
 import { SAMPLE_EXTRACTION } from "@documind/shared";
 import { DocumentPreview } from "@/components/document-preview";
 import { ExtractionSheet } from "@/components/extraction-sheet";
@@ -33,9 +34,9 @@ export default function ReviewPage() {
                 clear();
                 router.push(`/${locale}`);
               }}
-              className="flex h-9 w-9 items-center justify-center rounded-[3px] border border-rule-soft font-mono text-[13px] font-bold text-text-2 transition hover:border-rule hover:text-rule"
+              className="flex h-9 w-9 items-center justify-center rounded-[3px] border border-rule-soft text-text-2 transition hover:border-rule hover:text-rule"
             >
-              ←
+              <ArrowLeft size={16} strokeWidth={1.8} />
             </button>
           </>
         }

@@ -43,14 +43,14 @@ export function RuledFields() {
           ))}
         </div>
       </FieldBox>
-      <div className="flex gap-[18px]">
-        <FieldBox label={t("fecha")} serial="3" className="w-72">
+      <div className="flex flex-col gap-[18px] md:flex-row">
+        <FieldBox label={t("fecha")} serial="3" className="w-full md:w-72">
           <span className="font-mono text-[13px] text-rule-soft">{tc("datePlaceholder")}</span>
         </FieldBox>
-        <FieldBox label={t("total")} serial="4" className="w-72">
+        <FieldBox label={t("total")} serial="4" className="w-full md:w-72">
           <span className="font-mono text-[13px] text-rule-soft">{tc("totalPlaceholder")}</span>
         </FieldBox>
-        <FieldBox label={t("confianza")} serial="6" className="flex-1">
+        <FieldBox label={t("confianza")} serial="6" className="w-full md:flex-1">
           <span className="font-mono text-[13px] text-rule-soft">{tc("confPlaceholder")}</span>
         </FieldBox>
       </div>

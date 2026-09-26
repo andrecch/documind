@@ -12,18 +12,18 @@ export function CarbonStrip() {
           <span key={i} className="h-1 w-1 rounded-full bg-rule-soft" />
         ))}
       </div>
-      <div className="flex items-center justify-between bg-carbon px-7 py-5">
+      <div className="flex flex-col gap-2 bg-carbon px-7 py-5 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <p className="font-display text-[11px] font-bold uppercase tracking-[1.4px] text-carbon-key">
             {t("title")}
           </p>
           <p className="mt-1 truncate font-mono text-[12px] text-carbon-text">{SAMPLE}</p>
         </div>
-        <p className="ml-6 shrink-0 font-mono text-[10px] uppercase tracking-[1px] text-carbon-soft">
+        <p className="shrink-0 font-mono text-[10px] uppercase tracking-[1px] text-carbon-soft">
           {t("model")}
         </p>
       </div>
-      <div className="flex items-center justify-between bg-carbon px-7 pb-4">
+      <div className="flex flex-col gap-1 bg-carbon px-7 pb-4 md:flex-row md:items-center md:justify-between">
         <span className="font-mono text-[9.5px] uppercase tracking-[1.2px] text-carbon-soft">
           {t("hint")}
         </span>

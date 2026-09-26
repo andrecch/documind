@@ -69,7 +69,7 @@ export function ExtractionSheet({ value, docName }: { value: ExtractionResult; d
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border px-6">
         <span className="font-mono text-[13.5px] font-bold text-text">{docName}</span>
         <span className="flex-1" />
-        <span className="flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 font-display text-[10.5px] font-bold uppercase tracking-[1.2px] text-[color:var(--success)]">
+        <span className="flex items-center gap-2 rounded-full border border-rule-soft bg-sheet px-3 py-1.5 font-display text-[10.5px] font-bold uppercase tracking-[1.2px] text-[color:var(--success)]">
           <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--success)]" />
           {t("status")}
         </span>
