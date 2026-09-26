@@ -1,8 +1,16 @@
 node_modules
 package-lock.json
-pnpm-lock.yaml
 .env
 nul
 .codex/
 opencode.json
 *.txt
+.turbo
+.next
+dist
+coverage
+test-results
+playwright-report
+uploads
+*.log
+.impeccable/review/

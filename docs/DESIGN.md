@@ -1,88 +1,85 @@
-# DocuMind — Sistema de diseño «Dark Aurora»
+# DocuMind — Sistema de diseño «Talonario de facturas»
 
-> Dirección elegida: **Opción C · Dark Aurora** (ver artboards `C1 · Upload — Dark aurora` y `C2 · Revisión — Dark aurora` en la página «DocuMind · Propuestas UI» de OpenPencil).
+> Mundo elegido en la ronda de direcciones (seed `eeb832d8`, modo Operate) y construido en la rama `feat/redesign-world`. Reemplaza a «Dark Aurora». Registra el sistema **desde el código construido**, no una intención.
+> Comps aprobados (ley): board E «Talonario» (Subir) y «V2 · Partida» (Revisión) en OpenPencil — páginas «DocuMind · Rediseño · Direcciones» y «DocuMind · Revisión · Talonario».
 
-## 1. Concepto
+## 1. Tesis
 
-Producto de IA con fondo oscuro profundo, acento con degradado fucsia→violeta, superficies *glass* (blanco translúcido) y glows radiales como firma visual. El look «datos» (JSON) usa tipografía monoespaciada con resaltado violeta/verde/ámbar.
+La pantalla es una **hoja preimpresa del talonario** que la IA de visión rellena sola; el JSON extraído es su **copia carbón**. El usuario reconoce el formulario administrativo que ya sabe leer: campos numerados con banda de encabezado, serial rojo sellado y una copia carbón siempre visible al pie. Se rechaza el look genérico "AI nocturno" (mundo anterior, Dark Aurora) y el SaaS corporativo neutro.
 
-## 2. Tokens
+## 2. Modo y escena
 
-### Colores — Dark (por defecto)
+- **Modo: Operate** — el visitante completa una tarea (subir un documento, revisar sus datos). Escaneabilidad, affordances familiares y la tarea por encima de la expresión.
+- **Escena física:** escritorio de oficina de día → tema **claro por defecto**; `.dark` derivado como «taller de carbón nocturno» con toggle.
+
+## 3. Tokens (ground truth: `apps/web/src/app/globals.css`)
+
+### Claro (por defecto)
 
 | Token | Valor | Uso |
 |---|---|---|
-| `--bg` | `#0C0813` | Fondo de página (degradado 180° → `#170E23` al pie) |
-| `--surface` | `#130C1F` | Paneles (preview, JSON) |
-| `--glass` | `rgba(255,255,255,0.05)` | Dropzone, tarjetas glass |
-| `--border` | `rgba(255,255,255,0.08)` | Bordes de tarjetas/divider |
-| `--border-accent` | `rgba(200,85,245,0.40)` | Borde activo del dropzone |
-| `--text` | `#F5F2FA` | Títulos y textos primarios |
-| `--text-2` | `#B3A9C9` | Texto secundario |
-| `--text-3` | `#8D82A8` | Texto terciario/metadata |
-| `--accent` | `#7C5CFF` | Acción primaria |
-| `--accent-2` | `#C855F5` | Extremo del degradado |
-| `--accent-soft` | `rgba(200,85,245,0.15)` | Fondos de badge/pill |
-| `--success` | `#5FE0A8` | Estado «listo», strings del JSON |
-| `--json-key` | `#C98BFF` | Claves JSON |
-| `--json-string` | `#5FE0A8` | Valores string |
-| `--json-number` | `#F0B86B` | Valores numéricos |
-| `--json-punct` | `#6E6480` | Llaves/comas/indentación |
+| `--bg` | `#F7F4EA` | Mesa/ground de la app |
+| `--sheet` | `#FDFCF8` | Hoja: tarjetas, campos, nav |
+| `--band` | `#EEF1F8` | Bandas de encabezado de campo |
+| `--rule` | `#2E4E9E` | Retícula azul: bordes de campo, dropzone, acento estructural |
+| `--rule-soft` | `#C9D2E8` | Líneas placeholders, seriales decorativos, divisores |
+| `--border` | `#E2DFD2` | Bordes neutros (nav) |
+| `--text` | `#26231E` | Tinta carbón: títulos, datos |
+| `--text-2` | `#55503F` | Texto secundario (≥ 7:1 sobre hoja) |
+| `--text-3` | `#5A6584` | Etiquetas de campo (AA sobre hoja) |
+| `--accent` | `#C03A2B` | Serial, sellos de estado, acciones de énfasis |
+| `--accent-soft` | `#F7E4E1` | Fondo suave del acento |
+| `--success` | `#3D7A4E` | Verificación (confianza, LISTA) |
+| `--carbon` | `#26231E` | La copia carbón (JSON) |
+| `--carbon-text/-soft/-key/-number` | `#D8D2C6` / `#8FB8A6` / `#9AE3C8` / `#F0B86B` | Strings / metadata / claves / números dentro del carbón |
 
-### Colores — Light (derivado, para el toggle)
+### Oscuro (derivado «taller de carbón nocturno»)
 
-| Token | Valor |
-|---|---|
-| `--bg` | `#F7F4FB` · degradado → `#EFEAF6` |
-| `--surface` | `#FFFFFF` |
-| `--glass` | `rgba(255,255,255,0.75)` |
-| `--border` | `#E7E2F0` · `--border-accent: #C855F5` |
-| `--text` | `#241B30` · `--text-2: #6E6480` · `--text-3: #9C93AD` |
-| `--accent` | `#7C5CFF` · `--accent-soft: rgba(124,92,255,0.12)` |
-| `--success` | `#0E9F6E` · JSON: key `#7A5ACC`, string `#9A6B1F`, number `#0E7490`, punct `#9C93AD` |
+`--bg #14110C` · `--sheet #26231E` · `--band #33302A` · `--rule #7A93C9` · `--text #F5EFE2` · `--text-2 #C0B8A4` · `--text-3 #A8A091` · `--accent #D95A4A` · `--success #7BC98F` · `--carbon #0E0D0B` (carbón más profundo que la hoja).
 
-Gradient primario (logo, iconos, toggle activo): `135° #E37BEA → #7C5CFF`.
+## 4. Tipografía (razón de sujeto, no defaults de entrenamiento)
 
-### Tipografía
-
-| Cargo | Fuente | Peso | Tamaño |
-|---|---|---|---|
-| Display/H1 | Space Grotesk | 700 | 40–44 px, lh 1.12, ls −0.8 |
-| Subtítulos | Inter | 400/500 | 14–16 px, lh 1.5 |
-| UI/body | Inter | 400–600 | 13–15 px |
-| Código/JSON/labels | JetBrains Mono | 400–600 | 11–13 px |
-| Eyebrows (uppercase) | JetBrains Mono | 500–600 | 11 px, ls +1.4 |
-
-### Forma, sombra y glow
-
-- Radios: botones/chips `8–999`, tarjetas `12–18`, tiles icono `14–16`.
-- Glass: `fill --glass` + `border --border` + radius 14–18.
-- Glow firma: `shadow 0 18px 80px rgba(200,85,245,0.18)` en dropzone; halo `0 0 40px rgba(200,85,245,0.25)` en el documento de preview.
-- Glows ambientales: elipses radiales (fucsia `#C855F538` → transparente) en esquinas del hero.
-
-## 3. Componentes
-
-1. **Navbar** (64 px, padding 28): logo tile 28 r8 con gradiente + glifo escaneo; acciones derecha: select idioma (ES/EN), switch de tema, icon-button ajustes.
-2. **Dropzone**: glass 660×300 r18, borde `--border-accent` al arrastrar; tile 58 con gradiente + flecha de subida; textos «Arrastra…» / «o haz clic para explorar»; chips de formatos JPG·PNG·WEBP·PDF (mono 11); caption límite 20 MB.
-3. **Review split**: 50/50 con divider 1px `--border`. Izquierda: lienzo `#0F0A18`, documento blanco 4:5.5 r10 con doble sombra (negra + halo fucsia), paginador pill «Página 1 / N» con chevrons y zoom. Derecha: header «EXTRACCIÓN» + badge tipo doc + copy/download; cuerpo JSON en tarjeta glass r14; footer modelo/tokens/confianza (mono 11).
-4. **Badge de tipo de documento**: pill bg `--accent-soft`, texto mono 600 `#E5A8FF` (dark) / `#7A5ACC` (light), ls +0.8.
-5. **Estados**: dot 6px `--success` «Extracción lista»; pendiente = dot ámbar; error = destructive `#F87171`.
-
-## 4. Pantallas
-
-| Ruta (`/es`,`/en`) | Contenido | Estado |
+| Cargo | Fuente | Uso |
 |---|---|---|
-| `/` | Navbar + hero (badge eyebrow, H1, subtítulo) + Dropzone + caption | ✅ artboard C1 |
-| `/review` | Navbar con back + filename + estado; split preview/JSON | ✅ artboard C2 |
-| `/settings` | (M2) API key + modelos vision/embedding + catálogo free | ⏳ por diseñar en Aurora |
+| Rótulos preimpresos, headers de campo, H1 | **Archivo Narrow** 600–800, caps, tracking +1–1.6 | Toda etiqueta uppercase de la hoja |
+| Datos, serial, JSON, placeholders | **Courier Prime** 400–700 | Todo lo que "se escribe a máquina" |
+| Prosa breve (subtítulos, captions) | Archivo Narrow 400 | Texto corrido corto |
 
-## 5. Accesibilidad
+Prohibido volver a Inter/Space Grotesk/IBM Plex sin razón nueva de sujeto.
 
-- Contraste: `--text-2` sobre `--bg` ≥ 7:1; `--text-3` solo para metadata ≥ 4.5:1; estados nunca solo por color (dot + texto).
-- `:focus-visible` ring 2px `--accent` en dropzone/botones; dropzone accesible por teclado (Enter/Espacio abre el explorador vía input file).
-- El toggle de tema usa `next-themes` (evita FOUC con `suppressHydrationWarning`).
+## 5. Componentes (`apps/web/src/components`)
 
-## 6. i18n y contenido
+- **Navbar** (`navbar.tsx`): cuadrado rojo 24px (logo) + `DOCUMIND` (Archivo Narrow 700, 22px) + divisor + serial mono; derecha: `ThemeToggle` (lucide Sun/Moon) + ajustes (lucide Settings). En Revisión el slot `left` recibe el botón volver (lucide ArrowLeft).
+- **Campo 1 · UploadDropzone** (`upload-dropzone.tsx`): caja blanca con banda `EEF1F8` («1 · ADJUNTE DOCUMENTO») y zona interior azul punteada (`m-[10px]`); activa = borde `--accent` + `bg-accent-soft`; error con `role="alert"` en Courier Prime rojo; chips JPG/PNG/WEBP/PDF mono azul; icono lucide `Upload`.
+- **RuledFields** (`ruled-fields.tsx`): campos 2–6 con banda + serial esquinero; placeholders punteados en `rule-soft`; filas apilables (`flex-col md:flex-row`).
+- **DocumentPreview** (`document-preview.tsx`): «EL ORIGINAL» sobre `bg-band/60`; imagen inline o PDF (pdf.js) con **paginador real** (numPages + chevrons lucide deshabilitados en extremos); sello «LEÍDO» (border-2 rojo, mono) abajo-izquierda del original.
+- **ExtractionSheet** (`extraction-sheet.tsx`): «LA HOJA RELLENADA POR LA IA DE VISIÓN» — filas numeradas (1 Documento · 2 Tipo [badge rojo doble borde] · 3 Fecha · 4 Total · 5 Emisor/Receptor · 6 Confianza) + ÍTEMS con subtotal/IVA/total; barra de estado como píldora hoja (dot + texto verde); «Copiar» escribe JSON al portapapeles; «Descargar .json»; **copia carbón** al pie: banda oscura con perforaciones, JSON de 1 línea o expandido (tokenizado) con toggle «VER COPIA COMPLETA →» / «← VER FORMULARIO».
+- **CarbonStrip** (`carbon-strip.tsx`): versión estática de la copia carbón para la página Subir (estado M0: muestra literal en código, no en i18n — ICU no acepta llaves).
+- **ThemeToggle** (`theme-toggle.tsx`): next-themes `attribute="class"`, `defaultTheme="light"`.
 
-- Los copy exactos por pantalla viven en `apps/web/src/messages/es.json` / `en.json`.
-- Español: «De documento a datos, en un solo gesto» — Inglés: «From document to data, in a single gesture».
+## 6. Pantallas
+
+| Ruta | Mundo | Comp |
+|---|---|---|
+| `/es` · `/en` (Subir) | Hoja del talonario: header con serial rojo, Campo 1, campos 2–6 en blanco, carbón estático al pie | board E |
+| `/review` | V2 · Partida: EL ORIGINAL (izq.) + HOJA RELLENADA + carbón (der.) | V2 |
+| `/settings` (M2) | Hoja de configuración del mismo talonario (API key cifrada, modelos) | por diseñar — hereda este sistema |
+
+## 7. i18n y contenido
+
+- Copy por pantalla en `src/messages/{es,en.json}`; todo texto visible pasa por `next-intl` (es default).
+- Registro: la UI habla en primera persona del formulario («Suelte aquí su documento», «La hoja se llena sola»). Los datos de muestra viven en `@documind/shared` (`SAMPLE_EXTRACTION`), no en los mensajes.
+
+## 8. Accesibilidad (verificada en el finish review)
+
+- Contraste AA: etiquetas `--text-3 #5A6584` (≥ 4.5:1 sobre hoja); estados nunca solo por color (dot + texto); contenido deshabilitado marcado con `disabled` + opacidad.
+- Foco visible (`outline-accent`) en dropzone y botones; dropzone accesible por teclado.
+- Iconos exclusivamente lucide-react — sin glifos tipográficos en controles.
+
+## 9. Reglas de continuidad (para páginas nuevas)
+
+1. Toda pantalla nueva es una hoja del mismo talonario: banda de encabezado con número de campo, caja blanca, retícula azul, serial rojo para estados/identificadores.
+2. JSON y datos SIEMPRE en Courier Prime dentro de la copia carbón (`bg-carbon`), con la paleta de 4 colores del carbón.
+3. Nada de glows, glass, gradientes ni fondos oscuros en claro; el carbón es el único bloque oscuro permitido.
+4. Iconos: lucide, `strokeWidth 1.8`.
+5. Estados: sello rojo (completado/aprobado), rule-soft (pendiente), rojo Courier bold (error).

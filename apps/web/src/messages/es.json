@@ -1,0 +1,55 @@
+{
+  "theme": { "toLight": "Cambiar a tema claro", "toDark": "Cambiar a tema oscuro" },
+  "nav": { "brand": "DOCUMIND", "serial": "SERIE A · Nº 000123", "settings": "Ajustes" },
+  "upload": {
+    "sheetTitle": "REGISTRO DE EXTRACCIÓN DE DOCUMENTOS",
+    "sheetSub": "COPIA 1 · EL ORIGINAL SE CONSERVA EN SU EQUIPO",
+    "field1": "1 · ADJUNTE DOCUMENTO — IMAGEN O PDF",
+    "dropTitle": "SUELTE AQUÍ SU DOCUMENTO",
+    "browse": "o haga clic para buscar en sus archivos",
+    "caption": "La hoja se llena sola: la IA de visión lee el adjunto y completa los campos. Usted revisa, sella y archiva.",
+    "unsupported": "Formato no admitido. Use JPG, PNG, WEBP o PDF.",
+    "tooLarge": "El archivo supera {maxMb} MB.",
+    "fields": {
+      "tipo": "2 · TIPO DE DOCUMENTO",
+      "fecha": "3 · FECHA",
+      "total": "4 · TOTAL",
+      "emisor": "5 · EMISOR / RECEPTOR",
+      "confianza": "6 · CONFIANZA DE LECTURA"
+    },
+    "datePlaceholder": "____ / ____ / ________",
+    "totalPlaceholder": "$ ________.____",
+    "emisorPlaceholder": "EMISOR   ______________________________",
+    "receptorPlaceholder": "RECEPTOR _____________________________",
+    "confPlaceholder": "0.____"
+  },
+  "carbon": {
+    "title": "COPIA CARBÓN · DATOS EXTRAÍDOS",
+    "hint": "LA COPIA CARBÓN SE ENTREGA AL EXTRAER (M1)",
+    "model": "qwen/qwen3.8-27b:free · lectura pendiente"
+  },
+  "review": {
+    "back": "Volver",
+    "status": "LECTURA COMPLETADA",
+    "original": "EL ORIGINAL",
+    "page": "PÁGINA {page} / {total}",
+    "read": "LEÍDO",
+    "sheet": "HOJA RELLENADA POR LA IA DE VISIÓN",
+    "copy": "COPIAR",
+    "copied": "¡COPIADO!",
+    "download": "DESCARGAR .JSON",
+    "carbon": "LA COPIA CARBÓN · JSON",
+    "full": "VER COPIA COMPLETA →",
+    "form": "← VER FORMULARIO",
+    "empty": "No hay documento activo. Suba uno para comenzar.",
+    "f1": "1 · DOCUMENTO",
+    "f2": "2 · TIPO",
+    "f3": "3 · FECHA",
+    "f4": "4 · TOTAL",
+    "f5": "5 · EMISOR",
+    "receptor": "RECEPTOR",
+    "f6": "6 · CONFIANZA",
+    "items": "ÍTEMS",
+    "subtotal": "SUBTOTAL {subtotal} · IVA {tax}"
+  }
+}
