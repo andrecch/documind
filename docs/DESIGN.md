@@ -60,7 +60,7 @@ Prohibido volver a Inter/Space Grotesk/IBM Plex sin razón nueva de sujeto.
 | Ruta | Mundo | Comp |
 |---|---|---|
 | `/es` · `/en` (Subir) | Hoja de acción única: header con serial rojo + **Campo «ADJUNTE SU DOCUMENTO»** como único protagonista (sin campos vacíos ni franja de carbón — los campos solo existen rellenados en Revisión) | board E simplificado por decisión del usuario |
-| `/review` | V2 · Partida: EL ORIGINAL (izq.) + HOJA RELLENADA + bloque «DATOS EXTRAÍDOS · JSON» (der.) | V2 |
+| `/review` | **Ficha editable (M1)**: V2 · Partida — EL ORIGINAL (izq.) + formulario editable con inputs talonario (der.); el bloque «DATOS EXTRAÍDOS · JSON» permanece como referencia durante la edición; botón «CONFIRMAR Y ARCHIVAR» sella en rojo | V2 evolucionado (PRD v2) |
 | `/settings` (M2) | Hoja de configuración del mismo talonario (API key cifrada, modelos) | por diseñar — hereda este sistema |
 
 ## 7. i18n y contenido

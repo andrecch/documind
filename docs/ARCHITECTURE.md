@@ -1,115 +1,125 @@
-﻿# DocuMind â€” Arquitectura
+# DocuMind — Arquitectura
 
-> Estado: v1.0 Â· 2026-09-26 Â· Complementa `docs/PRD.md`
+> Estado: **v2.0** · 2026-09-26 · Alineada con el PRD v2 (RAG de documentos validado por humano). Supersede v1.
 
 ## 1. Resumen
 
-Monorepo pnpm/Turborepo con tres piezas:
+Monorepo pnpm/Turborepo: Next.js (UI) + NestJS (API) + Postgres/pgvector, con el **loop de ingesta validado por humano** como eje y una capa de recuperación (búsqueda + chat con citas) sobre los vectores.
 
 ```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚ apps/web (Next 15) â”‚â”€â”€â”€â”€â”€â–¶â”‚ apps/api (NestJS 11, M1)â”‚â”€â”€â”€â”€â”€â–¶â”‚ Apps: OpenRouter â”‚
-â”‚  drag&drop, previewâ”‚ HTTP â”‚  upload, pipeline,_cfg  â”‚      â”‚  visiÃ³n/embeddingâ”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-        @documind/shared (Zod, tipos)   â”‚ Drizzle ORM
-                                        â–¼
-                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                    â”‚ Postgres 16 + pgvector (Docker)â”‚
-                    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+apps/web (Next 15) ──HTTP──▶ apps/api (NestJS 11) ──▶ OpenRouter
+   talonario UI                 │  upload · OCR · confirmación      visión · embeddings · chat
+   formulario editable          │  embeddings · search · chat
+                                ▼ Drizzle
+                Postgres 16 + pgvector (Docker, :5433)
 ```
-
-**Fase actual (UI inicial):** solo `apps/web`, `packages/shared` e infra Docker. `apps/api` aparece en M1.
 
 ## 2. Estructura del monorepo
 
 ```
-documind/
-â”œâ”€ apps/
-â”‚  â”œâ”€ web/                     # Next.js 15 (App Router) â€” UI
-â”‚  â”‚  â””â”€ src/
-â”‚  â”‚     â”œâ”€ app/[locale]/      # pages: /, /review  (+ /settings en M2)
-â”‚  â”‚     â”œâ”€ components/        # navbar, upload-dropzone, document-preview, json-panel, theme-toggle
-â”‚  â”‚     â”œâ”€ i18n/              # next-intl: routing, request, navigation
-â”‚  â”‚     â”œâ”€ lib/store.ts       # zustand: documento activo en memoria
-â”‚  â”‚     â””â”€ messages/          # es.json, en.json
-â”‚  â””â”€ api/                     # NestJS 11 (M1) â€” mÃ³dulos: documents, llm, settings
-â”œâ”€ packages/
-â”‚  â””â”€ shared/                  # @documind/shared â€” tipos, esquemas Zod, validaciÃ³n archivos
-â”œâ”€ docker-compose.yml          # Postgres 16 + pgvector
-â”œâ”€ docs/                       # PRD, ARCHITECTURE, DESIGN, plans/
-â”œâ”€ turbo.json
-â””â”€ pnpm-workspace.yaml
+apps/web/         # Next.js 15 — talonario UI (Subir, Ficha editable, Búsqueda, Chat, Configuración)
+apps/api/         # NestJS 11 — módulos:
+│   ├─ documents    upload, storage, preview, estados
+│   ├─ extraction   OCR LLM de visión → draft editable (sync + backoff)
+│   ├─ confirmation gate + audit (llm vs humano)
+│   ├─ embeddings   texto natural padre + chunks hijos → /embeddings
+│   ├─ search       kNN pgvector + filtros
+│   ├─ chat         retrieve → LLM streaming (SSE) → citas
+│   └─ settings     API key cifrada, catálogo free, model_config
+packages/shared/  # @documind/shared — Zod (doc types, extraction, audit), validación archivos, contrato LLMProvider
+docker-compose.yml
 ```
 
-## 3. Stack y justificaciÃ³n
+## 3. Stack y justificación
 
-| Capa | ElecciÃ³n | Por quÃ© |
+| Capa | Elección | Por qué |
 |---|---|---|
-| Monorepo | pnpm workspaces + Turborepo | EstÃ¡ndarersh para TS; cachÃ© de tareas y pipelines simples |
-| Frontend | Next.js 15 App Router, TS strict, Tailwind v4 | SSR y file routing, ecosistema grande, i18n first-class con next-intl |
-| UI kit | Componentes propios con tokens CSS (Aurora) | Control total del look; MVP no necesita librerÃ­a completa |
-| Estado | zustand (documento activo) + TanStack Query (server state en M1) | MÃ­nimo y suficiente |
-| Upload | react-dropzone + pdfjs-dist (preview PDF) | Drag & drop accesible + render PDF sin dependencias nativas |
-| Backend (M1) | NestJS 11 | MÃ³dulos/DI, Multer, Swagger/OpenAPI, testing integrado |
-| ORM (M1) | Drizzle | Soporte nativo de `vector()` (pgvector), TS-first |
-| DB | PostgreSQL 16 + pgvector (imagen `pgvector/pgvector:pg16`) | JSONB + embeddings vectoriales en un solo motor |
-| LLM | Adapter OpenRouter (visiÃ³n + embeddings, variantes `:free`) | Ãšnico proveedor sin costo vigente; abstracciÃ³n lista para NVIDIA NIM y otros |
-| Seguridad | AES-256-GCM (node:crypto) para API keys en BD | EstÃ¡ndar de cifrado simÃ©trico autenticado |
-| Testing | Vitest (shared), e2e Playwright (flujos UI) | RÃ¡pido y estÃ¡ndar |
+| Frontend | Next.js 15 App Router, TS strict, Tailwind v4 (mundo Talonario) | SSR + i18n first-class (next-intl) |
+| Estado | zustand + TanStack Query | draft editable en cliente; mutaciones con re-validación |
+| Formulario | React Hook Form + Zod resolver | edición con validación en vivo del esquema compartido |
+| Backend | NestJS 11 (Multer, Swagger) | módulos por dominio del pipeline |
+| ORM | Drizzle (`vector()` nativo, transacciones para re-embed) | pgvector first-class |
+| DB | PostgreSQL 16 + pgvector (`pgvector/pgvector:pg16`) | JSONB + vector en un motor |
+| LLM | Adapter OpenRouter (visión + embeddings + chat, variantes `:free`) | único proveedor free; abstracción para NIM/others |
+| Streaming | SSE para el chat | estable sobre HTTP/1.1, sin WS |
+| Seguridad | AES-256-GCM (node:crypto) | clave cifrada en BD |
 
-## 4. Modelo de datos (M1â€“M2)
+## 4. Modelo de datos v2
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE TYPE document_status AS ENUM ('pending', 'processing', 'done', 'error');
-CREATE TYPE doc_type AS ENUM ('factura', 'contrato', 'recibo', 'documentacion', 'propuesta');
-CREATE TYPE model_purpose AS ENUM ('vision', 'embedding');
+CREATE TYPE document_status AS ENUM ('pending','processing','ready_for_review','archived','error');
+CREATE TYPE extraction_status AS ENUM ('draft','confirmed');
+CREATE TYPE doc_type AS ENUM ('factura','contrato','recibo','documentacion','propuesta');
+CREATE TYPE chunk_kind AS ENUM ('document','item');
+CREATE TYPE model_purpose AS ENUM ('vision','embedding','chat');
 
 CREATE TABLE documents (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  filename      TEXT NOT NULL,
-  mime          TEXT NOT NULL,
-  size_bytes    INTEGER NOT NULL,
-  storage_path  TEXT NOT NULL,              -- uploads/ en disco (volumen Docker)
-  status        document_status NOT NULL DEFAULT 'pending',
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  filename     TEXT NOT NULL,
+  mime         TEXT NOT NULL,
+  size_bytes   INTEGER NOT NULL,
+  storage_path TEXT NOT NULL,
+  page_count   INTEGER DEFAULT 1,
+  status       document_status NOT NULL DEFAULT 'pending',
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Una ficha por documento (multi-página agregada)
 CREATE TABLE extractions (
-  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  document_id       UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-  doc_type          doc_type NOT NULL,
-  confidence        REAL NOT NULL CHECK (confidence BETWEEN 0 AND 1),
-  data              JSONB NOT NULL,
-  provider          TEXT NOT NULL,          -- 'openrouter' | 'nvidia-nim' | ...
-  model_id          TEXT NOT NULL,
-  prompt_tokens     INTEGER,
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id    UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  status         extraction_status NOT NULL DEFAULT 'draft',
+  doc_type       doc_type NOT NULL,
+  confidence     REAL NOT NULL CHECK (confidence BETWEEN 0 AND 1),
+  llm_data       JSONB NOT NULL,        -- lo que reconoció el LLM (inmutable por versión)
+  confirmed_data JSONB,                 -- lo que el humano confirmó (null hasta confirmar)
+  field_audit    JSONB,                 -- por campo: {field: {llm, human}} diff de la versión
+  provider       TEXT NOT NULL,
+  model_id       TEXT NOT NULL,
+  prompt_tokens  INTEGER,
   completion_tokens INTEGER,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  confirmed_at   TIMESTAMPTZ,
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_extractions_document ON extractions(document_id);
 
--- Fase 2 de BÃºsqueda: chunks + embeddings (pgvector)
+-- Chunks: 1 padre (texto natural del documento) + N hijos por ítem
 CREATE TABLE document_chunks (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-  page        INTEGER,
+  extraction_id UUID NOT NULL REFERENCES extractions(id) ON DELETE CASCADE,
+  kind        chunk_kind NOT NULL DEFAULT 'document',
+  item_index  INTEGER,                   -- null en el padre
   content     TEXT NOT NULL,
-  embedding   vector(2048) NOT NULL       -- Nemotron 3 Embed 1B: 2048 dims
+  embedding   vector(2048) NOT NULL,     -- Nemotron 3 Embed 1B
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_chunks_embedding
-  ON document_chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX idx_chunks_embedding ON document_chunks
+  USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX idx_chunks_document ON document_chunks(document_id);
 
--- ConfiguraciÃ³n de proveedor
+-- Chat (M2)
+CREATE TABLE chat_messages (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID NOT NULL,
+  role       TEXT NOT NULL CHECK (role IN ('user','assistant')),
+  content    TEXT NOT NULL,
+  citations  JSONB,                      -- [{documentId, extractionId, chunkKind, itemIndex, field}]
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE provider_settings (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  provider      TEXT NOT NULL,
-  api_key_cipher BYTEA NOT NULL,            -- AES-256-GCM: [iv|tag|ciphertext]
-  api_key_hint  TEXT NOT NULL,              -- 'sk-or-â€¦4f2a' (mÃ¡scara para UI)
-  is_default    BOOLEAN NOT NULL DEFAULT true,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider       TEXT NOT NULL,
+  api_key_cipher BYTEA NOT NULL,
+  api_key_hint   TEXT NOT NULL,
+  is_default     BOOLEAN NOT NULL DEFAULT true,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE model_config (
@@ -117,7 +127,7 @@ CREATE TABLE model_config (
   provider   TEXT NOT NULL,
   purpose    model_purpose NOT NULL,
   model_id   TEXT NOT NULL,
-  dimensions INTEGER,                        -- 2048 para Nemotron 3 Embed 1B
+  dimensions INTEGER,
   is_default BOOLEAN NOT NULL DEFAULT true,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (provider, purpose, is_default)
@@ -127,96 +137,91 @@ CREATE TABLE model_config (
 **Seeds:**
 ```sql
 INSERT INTO model_config (provider, purpose, model_id, dimensions) VALUES
-  ('openrouter', 'vision',    'qwen/qwen3.8-27b:free',        NULL),
-  ('openrouter', 'embedding', 'nvidia/nemotron-3-embed-1b:free', 2048);
+  ('openrouter','vision',    'qwen/qwen3.8-27b:free',            NULL),
+  ('openrouter','embedding', 'nvidia/nemotron-3-embed-1b:free',  2048),
+  ('openrouter','chat',      'qwen/qwen3.8-27b:free',            NULL);
 ```
 
-## 5. Contratos de API (v1, apps/api â€” M1/M2)
+## 5. Contratos de API (v1)
 
-Base: `http://localhost:4000/api/v1` Â· Swagger en `/docs`.
+Base `http://localhost:4000/api/v1` · Swagger `/docs`.
 
-| MÃ©todo | Ruta | DescripciÃ³n |
+| Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/health` | Estado de la API y la BD |
-| POST | `/documents` | Upload (multipart `file`, mÃ¡x 20 MB) â†’ `201 {id, filename, mime, sizeBytes, status, previewUrl}` |
-| GET | `/documents` | Lista con paginaciÃ³n (`?page&limit&type`) |
-| GET | `/documents/:id` | Detalle + Ãºltima extracciÃ³n |
-| POST | `/documents/:id/extract` | Pasada LLM: clasificar + extraer â†’ `{docType, confidence, data}` |
-| GET | `/documents/:id/file` | Serve el archivo original (preview) |
-| PUT | `/settings/provider` | Guarda API key (body `{key}`) â†’ `{hint}`; la clave nunca se devuelve |
-| GET | `/settings/models?purpose=vision&free=true` | CatÃ¡logo de modelos gratis del proveedor |
-| PUT | `/settings/models` | `{purpose, modelId, dimensions?}` â†’ persiste selecciÃ³n |
-| POST | `/search` | (fase 2) BÃºsqueda semÃ¡ntica por embeddings |
+| GET | `/health` | API + BD + provider config |
+| POST | `/documents` | Upload (multipart) → `201 {id, filename, status}` |
+| GET | `/documents/:id/file` | Original para preview |
+| POST | `/documents/:id/extract` | OCR síncrono (estados + backoff) → draft `{extractionId, docType, confidence, llmData}` |
+| GET | `/documents/:id/extraction` | Ficha (draft o confirmed) |
+| PATCH | `/documents/:id/extraction` | Edita el draft (valida Zod; guarda auditoría de campos tocados) |
+| POST | `/documents/:id/confirm` | **Gate**: valida → genera texto natural → embed padre+ítems → inserta chunks → `ARCHIVADO` |
+| PATCH | `/documents/:id/extraction/confirmed` | Edita un archivado → guarda auditoría → **re-embed** transaccional |
+| GET | `/documents` | Historial (filtros: tipo, estado, fecha) |
+| POST | `/search` | `{query, docType?, from?, to?}` → top-k chunks con documento y fragmento |
+| POST | `/chat` | `{message, sessionId}` → SSE stream con respuesta grounded + `citations[]` |
+| GET | `/settings/models?purpose&free=true` | Catálogo del proveedor |
+| PUT | `/settings/models` | `{purpose, modelId, dimensions?}` |
+| PUT | `/settings/provider` | API key (cifrada) → `{hint}` |
 
-**Formato de error uniforme:**
-```json
-{ "code": "PROVIDER_TIMEOUT", "message": "â€¦", "details": {} }
+**Errores uniformes:** `{ "code", "message", "details" }`.
+
+## 6. Pipeline de ingesta (el corazón)
+
+```
+1. POST /documents            → valida → guarda en disco → documents(pending)
+2. POST /documents/:id/extract →
+   a. PDF → páginas a imagen (pdf.js server, JS puro)
+   b. Provider extractStructured(): imágenes dataURL + JSON Schema (de Zod)
+      · backoff exponencial ante 429/rate limit · estados: pending→processing→ready_for_review|error
+   c. extractions: llm_data (inmutable) + field_audit inicial vacío
+3. UI: formulario editable (Ficha) — cada edición → PATCH draft (valida Zod, audita diffs)
+4. POST /confirm            → GATE:
+   a. Valida confirmed_data con Zod (bloquea si inválido)
+   b. Generador de texto natural del documento (idioma del documento)
+   c. Embed: 1 chunk padre + N chunks hijos (ítems) vía /embeddings (Nemotron)
+   d. Inserta document_chunks en transacción → extractions.confirmed + documents.archived
+5. Re-edición de archivados → PATCH confirmed → re-embed transaccional (borra chunks viejos)
 ```
 
-## 6. Pipeline de extracciÃ³n (M1)
-
-```
-1. POST /documents      â†’ Multer valida MIME/tamaÃ±o â†’ guarda en disco â†’ row `documents(pending)`
-2. POST /:id/extract    â†’
-   a. Si PDF â†’ pdf-lib/pdfjs srv (JS puro) renderiza pÃ¡ginas â†’ PNG base64
-   b. Provider extractStructured(): chat/completions con imÃ¡genes (dataURL)
-      + response_format JSON Schema (generado del esquema Zod compartido)
-   c. Validar salida con Zod          â†’ error? 1 reintento con "corrige tu JSON"
-   d. Persistir extractions(doc_type, confidence, data, model, tokens)
-   e. Marcar done â†’ 200 JSON al frontend
-3. (Fase 2) Tras extracciÃ³n: chunking del texto â†’ POST /embeddings â†’ document_chunks
-```
-
-## 7. AbstracciÃ³n de proveedores LLM
+## 7. Abstracción de proveedores
 
 ```ts
-// packages/shared/src/llm.ts â€” el contrato que cualquier proveedor debe cumplir
-export type VisionInput =
-  | { imageBase64: string; mimeType: string }
-  | { pdfBase64: string };
-
-export interface ProviderModel { id: string; label: string; free: boolean; contextLength?: number; }
-
 export interface LLMProvider {
-  readonly id: string;                     // 'openrouter' | 'nvidia-nim' | ...
+  readonly id: string;
   extractStructured(input: VisionInput, jsonSchema: object): Promise<{
     raw: unknown; modelId: string; tokens: { prompt: number; completion: number };
   }>;
   embed(inputs: string[]): Promise<number[][]>;
-  listModels(purpose: "vision" | "embedding", opts?: { freeOnly?: boolean }): Promise<ProviderModel[]>;
+  chatStream(messages: ChatMessage[], opts?: { temperature?: number }): AsyncIterable<string>;
+  listModels(purpose: "vision" | "embedding" | "chat", opts?: { freeOnly?: boolean }): Promise<ProviderModel[]>;
 }
 ```
 
-- `OpenRouterAdapter` (M1): implementa el contrato con `POST /api/v1/chat/completions` (imÃ¡genes dataURL + `response_format: {type:"json_schema", json_schema:{...}}`) y `POST /api/v1/embeddings`; catÃ¡logo vÃ­a `/api/v1/embeddings/models` y `/api/v1/models`.
-- `NvidiaNimAdapter` (futuro): la API de NIM es compatible OpenAI â€” el mismo adapter con base URL distinta.
-- **Registry** en el backend: `Registry.get('openrouter')` resuelve el adapter desde `model_config`/`provider_settings` (BD), no del cÃ³digo.
-- Cambiar de modelo o de proveedor = actualizar la BD desde la pantalla de ConfiguraciÃ³n. NingÃºn SDK o slug hardcodeado.
-- Fuente de verdad de la key: BD (cifrada), leÃ­da solo por el backend al momento de la llamada.
+- `OpenRouterAdapter`: chat/completions (imágenes + `response_format: json_schema`), `/embeddings`, chat streaming SSE, `/models`.
+- Registry resuelve provider + modelo por propósito desde `model_config` (BD), nunca hardcodeado.
+- La API key descifrada solo existe en memoria del backend al llamar al proveedor.
 
-## 8. Seguridad de la API key (estÃ¡ndar aplicado)
+## 8. Estrategia RAG (embeddings + grounding)
 
-1. **Cifrado en reposo**: AES-256-GCM (`crypto.createCipheriv`) con clave maestra de 32 bytes desde `.env` (`DOCUMIND_MASTER_KEY`), nunca en la BD ni en el repo.
-2. **Formato**: `bytea = [12B iv | 16B authTag | ciphertext]`; descifrado verificado con authTag (integridad).
-3. **ExposiciÃ³n mÃ­nima**: la API solo devuelve `api_key_hint` (`sk-or-â€¦4f2a`); la clave descifrada solo existe en memoria del backend para la llamada al proveedor.
-4. **Logs**: prohibido registrar la clave o el Authorization; interceptor de logs con scrubbing.
-5. **RotaciÃ³n**: endpoint PUT reemplaza la clave; DELETE invalida. Sin sÃ­, siempre se cifra la Ãºltima versiÃ³n.
-6. **Transporte**: HTTPS en producciÃ³n; SameSite+CSRF en la pantalla de settings.
+- **Texto natural del documento** (padre), generado desde `confirmed_data` con plantilla por tipo de documento, en el idioma del documento: «Factura FAC-2026-0847 emitida por Suministros Andinos S.A. (NIT …) el 2026-09-12, receptor Constructora Delta Ltda., total COP 2.915.500 (impuestos 465.500). Incluye 2 ítems…».
+- **Chunks hijos por ítem** (kind=item, item_index): descripción + cantidad + valor → recall fino para búsqueda de líneas específicas.
+- **Retrieval**: kNN coseno (top-k 6 por defecto) + filtros (doc_type, fecha). El padre siempre acompaña a sus hijos en los resultados (dédup por document_id con ranking del mejor chunk).
+- **Chat grounded**: prompt de sistema estricto («responde SOLO con el contexto; si no está, dilo»); cada afirmación mapea a `citations[] {documentId, field|itemIndex}`; SSE streaming; historial de sesión en `chat_messages`.
 
-## 9. Infraestructura local (Docker)
+## 9. Seguridad de la API key
 
-`docker-compose.yml` (fase actual): servicio `db` con `pgvector/pgvector:pg16`, puerto **5433** (evita colisiÃ³n con una instancia local de Postgres), volumen persistente `documind_pgdata` y healthcheck `pg_isready`. La app web no habla con la BD aÃºn; el API (M1) la consumirÃ¡ via `DATABASE_URL=postgres://documind:documind@localhost:5433/documind`.
+AES-256-GCM con `DOCUMIND_MASTER_KEY` (env, 32B); formato `bytea = [iv|tag|cipher]`; solo `api_key_hint` (`••••4f2a`) hacia el frontend; prohibido en logs (scrubbing); rotación vía PUT.
 
-## 10. Convenciones
+## 10. Infraestructura
 
-- TypeScript `strict` en todos los paquetes; lint + typecheck como gates (Turbo).
-- Rutas y nombres de cÃ³digo en inglÃ©s; **textos de UI solo vÃ­a i18n** (`messages/es.json`, `en.json`).
-- Commits Convencionales `feat|fix|chore|docs: â€¦` (siempre con confirmaciÃ³n del usuario).
-- CSS con tokens (variables CSS) â€” sin hex sueltos en componentes; ver `docs/DESIGN.md`.
-- Puertos: web `3000`, api `4000`, postgres `5433`, Playwright webServer `3101`.
+`docker-compose.yml`: Postgres 16 + pgvector en `:5433` con volumen persistente y healthcheck. Puertos: web 3000, api 4000, Playwright 3101.
 
-## 11. Roadmap tÃ©cnico
+## 11. Convenciones
 
-- **UI inicial (M0)** â€” scaffold, tokens, i18n, tema, 2 pantallas, e2e smoke.
-- **M1** â€” `apps/api`, migraciones Drizzle, upload + extractor LLM + persistencia.
-- **M2** â€” pantalla de ConfiguraciÃ³n, embeddings, bÃºsqueda semÃ¡ntica `/search`.
-- **M3** â€” historial con filtros, export, afinado visual (skill interface-design).
+TS strict · lint/typecheck gates (Turbo) · i18n en todo texto visible · commits Convencionales (con confirmación del usuario) · tokens CSS del mundo Talonario (`docs/DESIGN.md`).
+
+## 12. Roadmap técnico
+
+- **M1 — Loop de ingesta**: apps/api + migraciones Drizzle (§4) + upload + OCR + **ficha editable talonario** + confirmar → embed → DB.
+- **M2 — Recuperación**: `/search` + `/chat` con citas + Configuración.
+- **M3 — Archivo**: historial con filtros, re-embed UX, export.
