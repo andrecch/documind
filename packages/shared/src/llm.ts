@@ -3,9 +3,17 @@ export type VisionInput = { imageBase64: string; mimeType: string } | { pdfBase6
 
 export interface LLMProvider {
   readonly id: string;
-  extractStructured(input: VisionInput, jsonSchema: object): Promise<{
-    raw: unknown; modelId: string; tokens: { prompt: number; completion: number };
+  extractStructured(
+    input: VisionInput,
+    jsonSchema: object,
+  ): Promise<{
+    raw: unknown;
+    modelId: string;
+    tokens: { prompt: number; completion: number };
   }>;
   embed(inputs: string[]): Promise<number[][]>;
-  listModels(purpose: "vision" | "embedding", opts?: { freeOnly?: boolean }): Promise<ProviderModel[]>;
+  listModels(
+    purpose: "vision" | "embedding",
+    opts?: { freeOnly?: boolean },
+  ): Promise<ProviderModel[]>;
 }

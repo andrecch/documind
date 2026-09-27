@@ -8,14 +8,24 @@ describe("validateFile", () => {
     expect(validateFile({ type: "image/png", size: 1024 })).toEqual({ ok: true, error: null });
   });
   it("rechaza tipos no admitidos", () => {
-    expect(validateFile({ type: "application/zip", size: 10 })).toEqual({ ok: false, error: "unsupported-type" });
+    expect(validateFile({ type: "application/zip", size: 10 })).toEqual({
+      ok: false,
+      error: "unsupported-type",
+    });
   });
   it("rechaza archivos mayores a 20 MB", () => {
-    expect(validateFile({ type: "application/pdf", size: MAX_FILE_SIZE_BYTES + 1 }))
-      .toEqual({ ok: false, error: "file-too-large" });
+    expect(validateFile({ type: "application/pdf", size: MAX_FILE_SIZE_BYTES + 1 })).toEqual({
+      ok: false,
+      error: "file-too-large",
+    });
   });
   it("declara los 4 MIME permitidos", () => {
-    expect([...ACCEPTED_MIME_TYPES]).toEqual(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+    expect([...ACCEPTED_MIME_TYPES]).toEqual([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
+    ]);
   });
 });
 
@@ -27,9 +37,17 @@ describe("extractionResultSchema", () => {
     expect(extractionResultSchema.safeParse({ tipo_documento: "tomografia" }).success).toBe(false);
   });
   it("valida confianza entre 0 y 1", () => {
-    expect(extractionResultSchema.safeParse({ tipo_documento: "factura", confianza: 1.2 }).success).toBe(false);
+    expect(
+      extractionResultSchema.safeParse({ tipo_documento: "factura", confianza: 1.2 }).success,
+    ).toBe(false);
   });
   it("tiene los 5 tipos de documento", () => {
-    expect([...DOCUMENT_TYPES]).toEqual(["factura", "contrato", "recibo", "documentacion", "propuesta"]);
+    expect([...DOCUMENT_TYPES]).toEqual([
+      "factura",
+      "contrato",
+      "recibo",
+      "documentacion",
+      "propuesta",
+    ]);
   });
 });

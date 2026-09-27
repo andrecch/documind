@@ -1,0 +1,4 @@
+#!/bin/sh
+# Hooks versionados: git config core.hooksPath .githooks
+node scripts/check-bom.mjs || exit 1
+pnpm exec prettier -c --log-level warn . || exit 1

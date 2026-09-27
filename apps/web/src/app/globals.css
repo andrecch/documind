@@ -2,50 +2,52 @@
 
 /* Mundo «Talonario» — claro por defecto (escena: oficina de día).
    Hoja preimpresa: papel #FDFCF8, retícula azul #2E4E9E, tinta carbón #26231E,
-   serial rojo #C03A2B, verde verificación #3D7A4E, carbón #26231E. */
+   serial rojo #C03A2B, verde verificación #3D7A4E, carbón #26231E.
+   --font-body es un alias de la única instancia Archivo Narrow (--font-display). */
 :root {
-  --bg: #F7F4EA;
-  --sheet: #FDFCF8;
-  --band: #EEF1F8;
-  --rule: #2E4E9E;
-  --rule-soft: #C9D2E8;
-  --border: #E2DFD2;
-  --border-accent: #2E4E9E;
-  --text: #26231E;
-  --text-2: #55503F;
-  --text-3: #5A6584;
-  --accent: #C03A2B;
-  --accent-soft: #F7E4E1;
-  --success: #3D7A4E;
-  --carbon: #26231E;
-  --carbon-text: #D8D2C6;
-  --carbon-soft: #8FB8A6;
-  --carbon-key: #9AE3C8;
-  --carbon-number: #F0B86B;
+  --font-body: var(--font-display);
+  --bg: #f7f4ea;
+  --sheet: #fdfcf8;
+  --band: #eef1f8;
+  --rule: #2e4e9e;
+  --rule-soft: #c9d2e8;
+  --border: #e2dfd2;
+  --border-accent: #2e4e9e;
+  --text: #26231e;
+  --text-2: #55503f;
+  --text-3: #5a6584;
+  --accent: #c03a2b;
+  --accent-soft: #f7e4e1;
+  --success: #3d7a4e;
+  --carbon: #26231e;
+  --carbon-text: #d8d2c6;
+  --carbon-soft: #8fb8a6;
+  --carbon-key: #9ae3c8;
+  --carbon-number: #f0b86b;
   --glow: none;
   --drop-ring: rgba(46, 78, 158, 0.35);
 }
 
 /* Derivado nocturno «taller de carbón»: hoja de carbón, tinta clara. */
 .dark {
-  --bg: #14110C;
-  --sheet: #26231E;
-  --band: #33302A;
-  --rule: #8AA0D4;
-  --rule-soft: #4A4A44;
-  --border: #3B372F;
-  --border-accent: #7A93C9;
-  --text: #F5EFE2;
-  --text-2: #C0B8A4;
-  --text-3: #A8A091;
-  --accent: #D95A4A;
+  --bg: #14110c;
+  --sheet: #26231e;
+  --band: #33302a;
+  --rule: #8aa0d4;
+  --rule-soft: #4a4a44;
+  --border: #3b372f;
+  --border-accent: #7a93c9;
+  --text: #f5efe2;
+  --text-2: #c0b8a4;
+  --text-3: #a8a091;
+  --accent: #d95a4a;
   --accent-soft: rgba(217, 90, 74, 0.16);
-  --success: #7BC98F;
-  --carbon: #0E0D0B;
-  --carbon-text: #D8D2C6;
-  --carbon-soft: #8FB8A6;
-  --carbon-key: #9AE3C8;
-  --carbon-number: #F0B86B;
+  --success: #7bc98f;
+  --carbon: #0e0d0b;
+  --carbon-text: #d8d2c6;
+  --carbon-soft: #8fb8a6;
+  --carbon-key: #9ae3c8;
+  --carbon-number: #f0b86b;
   --glow: none;
 }
 

@@ -1,4 +1,4 @@
-﻿# M0 â€” UI Inicial (Scaffold + Upload + RevisiÃ³n) â€” Plan de ImplementaciÃ³n
+# M0 â€” UI Inicial (Scaffold + Upload + RevisiÃ³n) â€” Plan de ImplementaciÃ³n
 
 > **For agentic workers:** REQUIRED SUB-SKILL: usa la skill local `executing-plans` para ejecutar este plan tarea por tarea. Steps con checkbox (`- [x]`).
 > **Nota de commits:** cada task tiene su paso de commit; si ejecutas en esta sesiÃ³n, confirma con el usuario antes de ejecutarlos (regla del proyecto).
@@ -136,6 +136,7 @@ DOCUMIND_PROVIDER=openrouter
 ```powershell
 docker exec documind-db psql -U documind -d documind -c "CREATE EXTENSION IF NOT EXISTS vector; SELECT extname FROM pg_extension WHERE extname = 'vector';"
 ```
+
 Esperado: una fila con `vector`.
 
 - [x] **Step 4: Commit** `chore: add postgres+pgvector docker compose`
@@ -169,8 +170,12 @@ Esperado: una fila con `vector`.
 ```json
 {
   "compilerOptions": {
-    "strict": true, "target": "ES2022", "module": "ESNext",
-    "moduleResolution": "bundler", "skipLibCheck": true, "noEmit": true
+    "strict": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "noEmit": true
   },
   "include": ["src"]
 }
@@ -189,14 +194,24 @@ describe("validateFile", () => {
     expect(validateFile({ type: "image/png", size: 1024 })).toEqual({ ok: true, error: null });
   });
   it("rechaza tipos no admitidos", () => {
-    expect(validateFile({ type: "application/zip", size: 10 })).toEqual({ ok: false, error: "unsupported-type" });
+    expect(validateFile({ type: "application/zip", size: 10 })).toEqual({
+      ok: false,
+      error: "unsupported-type",
+    });
   });
   it("rechaza archivos mayores a 20 MB", () => {
-    expect(validateFile({ type: "application/pdf", size: MAX_FILE_SIZE_BYTES + 1 }))
-      .toEqual({ ok: false, error: "file-too-large" });
+    expect(validateFile({ type: "application/pdf", size: MAX_FILE_SIZE_BYTES + 1 })).toEqual({
+      ok: false,
+      error: "file-too-large",
+    });
   });
   it("declara los 4 MIME permitidos", () => {
-    expect([...ACCEPTED_MIME_TYPES]).toEqual(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+    expect([...ACCEPTED_MIME_TYPES]).toEqual([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
+    ]);
   });
 });
 
@@ -208,10 +223,18 @@ describe("extractionResultSchema", () => {
     expect(extractionResultSchema.safeParse({ tipo_documento: "tomografia" }).success).toBe(false);
   });
   it("valida confianza entre 0 y 1", () => {
-    expect(extractionResultSchema.safeParse({ tipo_documento: "factura", confianza: 1.2 }).success).toBe(false);
+    expect(
+      extractionResultSchema.safeParse({ tipo_documento: "factura", confianza: 1.2 }).success,
+    ).toBe(false);
   });
   it("tiene los 5 tipos de documento", () => {
-    expect([...DOCUMENT_TYPES]).toEqual(["factura", "contrato", "recibo", "documentacion", "propuesta"]);
+    expect([...DOCUMENT_TYPES]).toEqual([
+      "factura",
+      "contrato",
+      "recibo",
+      "documentacion",
+      "propuesta",
+    ]);
   });
 });
 ```
@@ -222,39 +245,57 @@ describe("extractionResultSchema", () => {
 pnpm install
 pnpm --filter @documind/shared test
 ```
+
 Esperado: FAIL â€” no existe `./file-validation`.
 
 - [x] **Step 5:** implementaciÃ³n mÃ­nima.
 
 `packages/shared/src/document-types.ts`:
+
 ```ts
-export const DOCUMENT_TYPES = ["factura", "contrato", "recibo", "documentacion", "propuesta"] as const;
+export const DOCUMENT_TYPES = [
+  "factura",
+  "contrato",
+  "recibo",
+  "documentacion",
+  "propuesta",
+] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 ```
 
 `packages/shared/src/file-validation.ts`:
+
 ```ts
 import { z } from "zod";
 import { DOCUMENT_TYPES } from "./document-types";
 
 export const documentTypeSchema = z.enum(DOCUMENT_TYPES);
 
-export const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"] as const;
+export const ACCEPTED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+] as const;
 export type AcceptedMimeType = (typeof ACCEPTED_MIME_TYPES)[number];
 
 export const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 export type FileValidationError = "unsupported-type" | "file-too-large";
 
-export function validateFile(file: { type: string; size: number }):
-  { ok: true; error: null } | { ok: false; error: FileValidationError } {
-  if (!(ACCEPTED_MIME_TYPES as readonly string[]).includes(file.type)) return { ok: false, error: "unsupported-type" };
+export function validateFile(file: {
+  type: string;
+  size: number;
+}): { ok: true; error: null } | { ok: false; error: FileValidationError } {
+  if (!(ACCEPTED_MIME_TYPES as readonly string[]).includes(file.type))
+    return { ok: false, error: "unsupported-type" };
   if (file.size > MAX_FILE_SIZE_BYTES) return { ok: false, error: "file-too-large" };
   return { ok: true, error: null };
 }
 ```
 
 `packages/shared/src/extraction.ts`:
+
 ```ts
 import { z } from "zod";
 import { documentTypeSchema } from "./file-validation";
@@ -263,17 +304,25 @@ export const extractionResultSchema = z.object({
   tipo_documento: documentTypeSchema,
   numero: z.string().optional(),
   fecha_emision: z.string().optional(),
-  emisor: z.object({ nombre: z.string().optional(), identificacion: z.string().optional() }).optional(),
-  receptor: z.object({ nombre: z.string().optional(), identificacion: z.string().optional() }).optional(),
+  emisor: z
+    .object({ nombre: z.string().optional(), identificacion: z.string().optional() })
+    .optional(),
+  receptor: z
+    .object({ nombre: z.string().optional(), identificacion: z.string().optional() })
+    .optional(),
   moneda: z.string().length(3).optional(),
   subtotal: z.number().optional(),
   impuestos: z.number().optional(),
   total: z.number().optional(),
-  items: z.array(z.object({
-    concepto: z.string(),
-    cantidad: z.number().optional(),
-    valor: z.number().optional(),
-  })).optional(),
+  items: z
+    .array(
+      z.object({
+        concepto: z.string(),
+        cantidad: z.number().optional(),
+        valor: z.number().optional(),
+      }),
+    )
+    .optional(),
   confianza: z.number().min(0).max(1),
 });
 export type ExtractionResult = z.infer<typeof extractionResultSchema>;
@@ -297,21 +346,31 @@ export const SAMPLE_EXTRACTION: ExtractionResult = {
 ```
 
 `packages/shared/src/llm.ts` (contrato para M1/M2 â€” se compila, no se usa aÃºn):
+
 ```ts
 export type ProviderModel = { id: string; label: string; free: boolean; contextLength?: number };
 export type VisionInput = { imageBase64: string; mimeType: string } | { pdfBase64: string };
 
 export interface LLMProvider {
   readonly id: string;
-  extractStructured(input: VisionInput, jsonSchema: object): Promise<{
-    raw: unknown; modelId: string; tokens: { prompt: number; completion: number };
+  extractStructured(
+    input: VisionInput,
+    jsonSchema: object,
+  ): Promise<{
+    raw: unknown;
+    modelId: string;
+    tokens: { prompt: number; completion: number };
   }>;
   embed(inputs: string[]): Promise<number[][]>;
-  listModels(purpose: "vision" | "embedding", opts?: { freeOnly?: boolean }): Promise<ProviderModel[]>;
+  listModels(
+    purpose: "vision" | "embedding",
+    opts?: { freeOnly?: boolean },
+  ): Promise<ProviderModel[]>;
 }
 ```
 
 `packages/shared/src/index.ts`:
+
 ```ts
 export * from "./document-types";
 export * from "./file-validation";
@@ -363,40 +422,71 @@ existentes: "build", "dev", "lint", "start"
 @import "tailwindcss";
 
 :root {
-  --bg: #F7F4FB; --bg-2: #EFEAF6;
-  --surface: #FFFFFF; --glass: rgba(255, 255, 255, 0.75);
-  --border: #E7E2F0; --border-accent: #C855F5;
-  --text: #241B30; --text-2: #6E6480; --text-3: #9C93AD;
-  --accent: #7C5CFF; --accent-2: #C855F5;
+  --bg: #f7f4fb;
+  --bg-2: #efeaf6;
+  --surface: #ffffff;
+  --glass: rgba(255, 255, 255, 0.75);
+  --border: #e7e2f0;
+  --border-accent: #c855f5;
+  --text: #241b30;
+  --text-2: #6e6480;
+  --text-3: #9c93ad;
+  --accent: #7c5cff;
+  --accent-2: #c855f5;
   --accent-soft: rgba(124, 92, 255, 0.12);
-  --success: #0E9F6E;
-  --json-key: #7A5ACC; --json-string: #9A6B1F; --json-number: #0E7490; --json-punct: #9C93AD;
+  --success: #0e9f6e;
+  --json-key: #7a5acc;
+  --json-string: #9a6b1f;
+  --json-number: #0e7490;
+  --json-punct: #9c93ad;
   --glow: 0 18px 80px rgba(200, 85, 245, 0.18);
 }
 
 .dark {
-  --bg: #0C0813; --bg-2: #170E23;
-  --surface: #130C1F; --glass: rgba(255, 255, 255, 0.05);
-  --border: rgba(255, 255, 255, 0.08); --border-accent: rgba(200, 85, 245, 0.4);
-  --text: #F5F2FA; --text-2: #B3A9C9; --text-3: #8D82A8;
-  --accent: #7C5CFF; --accent-2: #C855F5;
+  --bg: #0c0813;
+  --bg-2: #170e23;
+  --surface: #130c1f;
+  --glass: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-accent: rgba(200, 85, 245, 0.4);
+  --text: #f5f2fa;
+  --text-2: #b3a9c9;
+  --text-3: #8d82a8;
+  --accent: #7c5cff;
+  --accent-2: #c855f5;
   --accent-soft: rgba(200, 85, 245, 0.15);
-  --success: #5FE0A8;
-  --json-key: #C98BFF; --json-string: #5FE0A8; --json-number: #F0B86B; --json-punct: #6E6480;
+  --success: #5fe0a8;
+  --json-key: #c98bff;
+  --json-string: #5fe0a8;
+  --json-number: #f0b86b;
+  --json-punct: #6e6480;
   --glow: 0 18px 80px rgba(200, 85, 245, 0.18);
 }
 
 @theme inline {
-  --color-bg: var(--bg); --color-bg-2: var(--bg-2);
-  --color-surface: var(--surface); --color-glass: var(--glass);
-  --color-border: var(--border); --color-border-accent: var(--border-accent);
-  --color-text: var(--text); --color-text-2: var(--text-2); --color-text-3: var(--text-3);
-  --color-accent: var(--accent); --color-accent-2: var(--accent-2);
-  --color-accent-soft: var(--accent-soft); --color-success: var(--success);
-  --font-display: var(--font-display); --font-body: var(--font-body); --font-mono: var(--font-mono);
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-surface: var(--surface);
+  --color-glass: var(--glass);
+  --color-border: var(--border);
+  --color-border-accent: var(--border-accent);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
 }
 
-body { background: var(--bg); color: var(--text); font-family: var(--font-body), system-ui, sans-serif; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
 ```
 
 - [x] **Step 2:** fuentes en `apps/web/src/app/layout.tsx` (por ahora el layout bÃ¡sico de Next) â€” imports:
@@ -404,10 +494,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body),
 ```tsx
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 
-const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", weight: ["500", "700"] });
+const display = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["500", "700"],
+});
 const body = Inter({ subsets: ["latin"], variable: "--font-body" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 ```
+
 y en `<html className={\`${display.variable} ${body.variable} ${mono.variable}\`}>`.
 
 - [x] **Step 3:** `apps/web/src/components/theme-toggle.tsx`:
@@ -454,6 +549,7 @@ export const routing = defineRouting({ locales: ["es", "en"], defaultLocale: "es
 ```
 
 `apps/web/src/i18n/navigation.ts`:
+
 ```ts
 import { createNavigation } from "next-intl/navigation";
 import { routing } from "./routing";
@@ -461,6 +557,7 @@ export const { Link, redirect, usePathname, useRouter, getPathname } = createNav
 ```
 
 `apps/web/src/i18n/request.ts`:
+
 ```ts
 import { hasLocale } from "next-intl";
 import { getRequestConfig } from "next-intl/server";
@@ -474,6 +571,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
 ```
 
 `apps/web/src/middleware.ts`:
+
 ```ts
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
@@ -482,6 +580,7 @@ export const config = { matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"] };
 ```
 
 `apps/web/next.config.ts` â€” envolver con el plugin:
+
 ```ts
 import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin();
@@ -491,6 +590,7 @@ const withNextIntl = createNextIntlPlugin();
 - [x] **Step 2:** mensajes completos.
 
 `apps/web/src/messages/es.json`:
+
 ```json
 {
   "theme": { "toLight": "Cambiar a tema claro", "toDark": "Cambiar a tema oscuro" },
@@ -520,6 +620,7 @@ const withNextIntl = createNextIntlPlugin();
 ```
 
 `apps/web/src/messages/en.json`: estructura idÃ©ntica con:
+
 ```json
 {
   "theme": { "toLight": "Switch to light theme", "toDark": "Switch to dark theme" },
@@ -534,13 +635,19 @@ const withNextIntl = createNextIntlPlugin();
     "tooLarge": "File exceeds {{maxMb}} MB."
   },
   "review": {
-    "back": "Back", "status": "Extraction ready", "panel": "EXTRACTION",
-    "copy": "Copy JSON", "copied": "Copied!", "download": "Download .json",
-    "page": "Page {{page}} / {{total}}", "zoom": "100% Â· Fit",
+    "back": "Back",
+    "status": "Extraction ready",
+    "panel": "EXTRACTION",
+    "copy": "Copy JSON",
+    "copied": "Copied!",
+    "download": "Download .json",
+    "page": "Page {{page}} / {{total}}",
+    "zoom": "100% Â· Fit",
     "empty": "No active document. Upload one to get started."
   }
 }
 ```
+
 (Â«review.captionÂ» usa la misma frase que Â«upload.captionÂ»).
 
 - [x] **Step 3:** reestructurar app: mover `apps/web/src/app/page.tsx` a `apps/web/src/app/[locale]/page.tsx` (se reescribe en Task 7) y crear `apps/web/src/app/[locale]/layout.tsx`:
@@ -567,6 +674,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   );
 }
 ```
+
 (borrar `apps/web/src/app/layout.tsx`, `app/page.tsx` y `app/favicon.ico` se conserva en `app/`).
 
 - [x] **Step 4: Verificar** â€” `pnpm --filter web build` â†’ success; `http://localhost:3101/es` redirige desde `/` (middleware).
@@ -583,7 +691,10 @@ export default async function LocaleLayout({ children, params }: Props) {
 import { create } from "zustand";
 
 export type ActiveDoc = {
-  name: string; mime: string; size: number; objectUrl: string;
+  name: string;
+  mime: string;
+  size: number;
+  objectUrl: string;
 };
 
 type ActiveDocState = {
@@ -661,17 +772,27 @@ export function UploadDropzone() {
       if (!file) return;
       const result = validateFile(file);
       if (!result.ok) {
-        setError(result.error === "file-too-large" ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"));
+        setError(
+          result.error === "file-too-large" ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"),
+        );
         return;
       }
-      set({ name: file.name, mime: file.type, size: file.size, objectUrl: URL.createObjectURL(file) });
+      set({
+        name: file.name,
+        mime: file.type,
+        size: file.size,
+        objectUrl: URL.createObjectURL(file),
+      });
       router.push(`/${locale}/review`);
     },
-    [set, router, locale, t]
+    [set, router, locale, t],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop, accept: ACCEPT, multiple: false, noClick: false,
+    onDrop,
+    accept: ACCEPT,
+    multiple: false,
+    noClick: false,
   });
 
   return (
@@ -690,12 +811,19 @@ export function UploadDropzone() {
       <p className="mt-1.5 text-[14px] text-text-2">{t("browse")}</p>
       <div className="mt-5 flex items-center justify-center gap-2">
         {["JPG", "PNG", "WEBP", "PDF"].map((f) => (
-          <span key={f} className="rounded-lg border border-border bg-surface px-2.5 py-1 font-mono text-[11px] text-text-2">
+          <span
+            key={f}
+            className="rounded-lg border border-border bg-surface px-2.5 py-1 font-mono text-[11px] text-text-2"
+          >
             {f}
           </span>
         ))}
       </div>
-      {error && <p role="alert" className="mt-4 text-[13px] text-red-400">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-4 text-[13px] text-red-400">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -724,7 +852,9 @@ export default async function UploadPage({ params }: Props) {
         <h1 className="max-w-[720px] font-display text-4xl font-bold leading-[1.12] tracking-tight text-text md:text-[44px]">
           {t("upload.title")}
         </h1>
-        <p className="max-w-[620px] text-[16px] leading-relaxed text-text-2">{t("upload.subtitle")}</p>
+        <p className="max-w-[620px] text-[16px] leading-relaxed text-text-2">
+          {t("upload.subtitle")}
+        </p>
         <UploadDropzone />
         <p className="text-[12.5px] text-text-3">
           {t("upload.caption", { maxMb: Math.round(20) })}
@@ -758,7 +888,10 @@ function PdfPreview({ url, page }: { url: string; page: number }) {
     let cancelled = false;
     (async () => {
       const pdfjs = await import("pdfjs-dist");
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/build/pdf.worker.min.mjs",
+        import.meta.url,
+      ).toString();
       try {
         const doc = await pdfjs.getDocument(url).promise;
         const pageDoc = await doc.getPage(page);
@@ -773,7 +906,9 @@ function PdfPreview({ url, page }: { url: string; page: number }) {
         if (!cancelled) setError(true);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [url, page]);
   if (error) return <div className="text-text-3">PDF no renderizable</div>;
   return <canvas ref={canvasRef} className="max-h-full max-w-full rounded-lg bg-white" />;
@@ -782,14 +917,17 @@ function PdfPreview({ url, page }: { url: string; page: number }) {
 export function DocumentPreview({ doc }: { doc: ActiveDoc }) {
   return (
     <section className="flex h-full min-w-0 flex-1 items-center justify-center bg-[#0F0A18] p-6">
-      {doc.mime === "application/pdf"
-        ? <PdfPreview url={doc.objectUrl} page={1} />
+      {doc.mime === "application/pdf" ? (
+        <PdfPreview url={doc.objectUrl} page={1} />
+      ) : (
         // eslint-disable-next-line @next/next/no-img-element
-        : <img src={doc.objectUrl} alt={doc.name} className="max-h-full max-w-full rounded-lg" />}
+        <img src={doc.objectUrl} alt={doc.name} className="max-h-full max-w-full rounded-lg" />
+      )}
     </section>
   );
 }
 ```
+
 (El paginador Â«PÃ¡gina 1/NÂ» completo llega con estados; se muestra tambiÃ©n el pill con `useTranslations("review.page")` cuando se conocen las pÃ¡ginas.)
 
 - [x] **Step 2:** `apps/web/src/components/json-panel.tsx` (resaltado de sintaxis + copiar + descargar):
@@ -804,14 +942,24 @@ import type { ExtractionResult } from "@documind/shared";
 function renderLine(line: string, ix: number) {
   const re = /"(?:\\.|[^"\\])*"(\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?|./g;
   const out: JSX.Element[] = [];
-  let m: RegExpExecArray | null, k = 0;
+  let m: RegExpExecArray | null,
+    k = 0;
   while ((m = re.exec(line))) {
     const [tok0, colon] = m;
-    const cls = tok0.startsWith('"') ? (colon ? "text-[color:var(--json-key)]" : "text-[color:var(--json-string)]")
-      : /^(true|false|null)$/.test(tok0) ? "text-[color:var(--json-number)]"
-      : /^-?\d/.test(tok0) ? "text-[color:var(--json-number)]"
-      : "text-[color:var(--json-punct)]";
-    out.push(<span key={`${ix}-${k++}`} className={cls}>{tok0}</span>);
+    const cls = tok0.startsWith('"')
+      ? colon
+        ? "text-[color:var(--json-key)]"
+        : "text-[color:var(--json-string)]"
+      : /^(true|false|null)$/.test(tok0)
+        ? "text-[color:var(--json-number)]"
+        : /^-?\d/.test(tok0)
+          ? "text-[color:var(--json-number)]"
+          : "text-[color:var(--json-punct)]";
+    out.push(
+      <span key={`${ix}-${k++}`} className={cls}>
+        {tok0}
+      </span>,
+    );
     if (re.lastIndex === m.index) re.lastIndex++;
   }
   return out;
@@ -838,20 +986,34 @@ export function JsonPanel({ value }: { value: ExtractionResult }) {
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col border-l border-border bg-surface">
       <header className="flex h-[52px] items-center gap-2.5 px-5">
-        <span className="font-mono text-[11px] font-medium tracking-[1.4px] text-text-3">{t("panel")}</span>
+        <span className="font-mono text-[11px] font-medium tracking-[1.4px] text-text-3">
+          {t("panel")}
+        </span>
         <span className="rounded-full bg-accent-soft px-3 py-1 font-mono text-[11px] font-semibold tracking-[0.8px] text-[color:var(--json-key)]">
           {value.tipo_documento.toUpperCase()}
         </span>
         <div className="flex-1" />
-        <button type="button" onClick={onCopy} className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] text-text-2 hover:text-text">
+        <button
+          type="button"
+          onClick={onCopy}
+          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] text-text-2 hover:text-text"
+        >
           {copied ? t("copied") : t("copy")}
         </button>
-        <button type="button" onClick={onDownload} className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] text-text-2 hover:text-text">
+        <button
+          type="button"
+          onClick={onDownload}
+          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] text-text-2 hover:text-text"
+        >
           {t("download")}
         </button>
       </header>
       <div className="flex-1 overflow-auto p-5">
-        <pre className="font-mono text-[13px] leading-[1.65]">{text.split("\n").map((l, ix) => (<div key={ix}>{renderLine(l, ix)}</div>))}</pre>
+        <pre className="font-mono text-[13px] leading-[1.65]">
+          {text.split("\n").map((l, ix) => (
+            <div key={ix}>{renderLine(l, ix)}</div>
+          ))}
+        </pre>
       </div>
       <footer className="flex h-10 items-center justify-between border-t border-border px-5 font-mono text-[11px] text-text-3">
         <span>qwen/qwen3.8-27b:free</span>
@@ -891,26 +1053,35 @@ export default function ReviewPage() {
 
   return (
     <main className="flex min-h-dvh flex-1 flex-col bg-bg">
-      <Navbar left={
-        <>
-          <button
-            type="button"
-            aria-label={t("back")}
-            onClick={() => { clear(); router.push(`/${locale}`); }}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text-2"
-          >
-            â†
-          </button>
-          <span className="text-[14px] font-medium text-text">{doc.name}</span>
-          <span className="flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-[12px] text-[color:var(--success)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--success)]" />
-            {t("status")}
-          </span>
-        </>
-      } />
+      <Navbar
+        left={
+          <>
+            <button
+              type="button"
+              aria-label={t("back")}
+              onClick={() => {
+                clear();
+                router.push(`/${locale}`);
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text-2"
+            >
+              â†
+            </button>
+            <span className="text-[14px] font-medium text-text">{doc.name}</span>
+            <span className="flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-[12px] text-[color:var(--success)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--success)]" />
+              {t("status")}
+            </span>
+          </>
+        }
+      />
       <div className="flex h-[calc(100dvh-64px)] flex-col md:flex-row">
-        <div className="h-full flex-1"><DocumentPreview doc={doc} /></div>
-        <div className="h-full flex-1"><JsonPanel value={SAMPLE_EXTRACTION} /></div>
+        <div className="h-full flex-1">
+          <DocumentPreview doc={doc} />
+        </div>
+        <div className="h-full flex-1">
+          <JsonPanel value={SAMPLE_EXTRACTION} />
+        </div>
       </div>
     </main>
   );
@@ -962,13 +1133,15 @@ test("1Ã—1 PNG â†’ /es/review muestra el JSON de muestra", async ({ page
   await expect(page.getByText('"tipo_documento"')).toBeVisible();
   const copyBtn = page.getByRole("button", { name: "Copiar JSON" });
   await copyBtn.click();
-  await expect(page.getByRole("button", { name: "Â¡Copiado!" } )).toBeVisible();
+  await expect(page.getByRole("button", { name: "Â¡Copiado!" })).toBeVisible();
 });
 
 test("rechaza un tipo no admitido", async ({ page }) => {
   await page.goto("/es");
   await page.locator('input[type="file"]').setInputFiles({
-    name: "doc.zip", mimeType: "application/zip", buffer: Buffer.from("PK"),
+    name: "doc.zip",
+    mimeType: "application/zip",
+    buffer: Buffer.from("PK"),
   });
   await expect(page.getByText("Formato no admitido")).toBeVisible();
   await expect(page).toHaveURL(/\/es$/);

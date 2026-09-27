@@ -25,12 +25,12 @@ Los documentos administrativos (facturas, contratos, recibos, documentación, pr
 
 ## 4. Alcance por fases
 
-| Fase | Contenido | Estado |
-|---|---|---|
-| **UI inicial (M0)** | Monorepo + Docker (Postgres/pgvector) + mundo visual «Talonario» con Subir y Revisión (visor) | ✅ hecho |
+| Fase                     | Contenido                                                                                                                                                   | Estado      |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| **UI inicial (M0)**      | Monorepo + Docker (Postgres/pgvector) + mundo visual «Talonario» con Subir y Revisión (visor)                                                               | ✅ hecho    |
 | **M1 — Loop de ingesta** | Backend NestJS, upload real, OCR con LLM de visión, **formulario editable** (talonario), gate de confirmación, embeddings padre/hijo, persistencia completa | ← siguiente |
-| **M2 — Recuperación** | `/search` semántica, **chat con citas**, pantalla de Configuración (API key cifrada, catálogo de modelos free) | pendiente |
-| **M3 — Archivo** | Historial con filtros por tipo, re-embedding al editar, export, afinado | pendiente |
+| **M2 — Recuperación**    | `/search` semántica, **chat con citas**, pantalla de Configuración (API key cifrada, catálogo de modelos free)                                              | pendiente   |
+| **M3 — Archivo**         | Historial con filtros por tipo, re-embedding al editar, export, afinado                                                                                     | pendiente   |
 
 **Fuera de alcance:** OCR local, autenticación multiusuario, facturación, apps móviles nativas, S3 (disco local vía volumen Docker en el MVP).
 
@@ -41,6 +41,7 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 ## 6. User Stories y criterios de aceptación
 
 ### US1 · Subir documento
+
 > Como usuario, quiero arrastrar una imagen o PDF — o hacer clic para explorar — para procesar un documento.
 
 - **AC1.1** Acepta `JPG`, `PNG`, `WEBP`, `PDF` ≤ **20 MB**; el dropzone es clickeable además de receptivo.
@@ -48,6 +49,7 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 - **AC1.3** PDFs multi-página se tratan como **un solo documento** (campos agregados de las N páginas); el preview paginado queda disponible.
 
 ### US2 · Formulario editable (corazón del producto)
+
 > Como usuario, quiero ver los datos que la IA reconoció como formulario con labels e inputs editables — corregirlos si se equivocó — y confirmar el documento para archivarlo en mi base.
 
 - **AC2.1** Split 50/50: original (imagen/PDF paginado) a la izquierda; formulario a la derecha con los campos reconocidos como **inputs editables** (texto, fecha, moneda, números), no como ficha de solo lectura.
@@ -58,18 +60,21 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 - **AC2.6** Al confirmar: se genera el texto natural del documento + chunks hijos por ítem → embedding (2048 dims) → inserción en pgvector → estado `ARCHIVADO` (sello visible).
 
 ### US3 · Re-editar un documento archivado
+
 > Como usuario, quiero reabrir un documento archivado, corregir algo y guardar, sabiendo que sus vectores se actualizan.
 
 - **AC3.1** Editable + **re-embed** en cada guardado (los chunks antiguos se reemplazan); la BD siempre refleja la verdad actual.
 - **AC3.2** Cada edición guarda nueva auditoría (historial de correcciones).
 
 ### US4 · Búsqueda semántica
+
 > Como usuario, quiero buscar en mis documentos archivados por significado («la factura de la instalación eléctrica»).
 
 - **AC4.1** `/search` devuelve los documentos más relevantes con el fragmento fuente resaltado.
 - **AC4.2** Filtros por tipo de documento y fecha.
 
 ### US5 · Chat con citas
+
 > Como usuario, quiero preguntarle a DocuMind sobre mis documentos y recibir respuestas que citen la fuente.
 
 - **AC5.1** El chat responde **exclusivamente** con contexto recuperado (chunks pgvector); nada inventado.
@@ -77,12 +82,14 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 - **AC5.3** Respuesta en streaming; modelo de chat `Qwen3.8 27B :free`.
 
 ### US6 · Configuración
+
 > Como usuario, quiero agregar mi API key de OpenRouter desde la UI y elegir los modelos de visión/embedding/chat.
 
 - **AC6.1** La clave se guarda **cifrada** (AES-256-GCM) en BD; la UI solo ve una máscara `••••4f2a`.
 - **AC6.2** El selector de modelos lista los modelos gratuitos vigentes del catálogo de OpenRouter; la elección se persiste en BD (nada hardcodeado).
 
 ### US7 · Idioma · US8 · Tema
+
 - **AC7.1** i18n `es` (default) / `en` en todo texto visible.
 - **AC8.1** Tema claro (base) / oscuro con toggle.
 
@@ -112,11 +119,11 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 
 ## 9. Modelos por defecto (tier free OpenRouter, configurables en BD desde la UI)
 
-| Propósito | Modelo | Slug |
-|---|---|---|
-| OCR / visión | Qwen3.8 27B (free) | `qwen/qwen3.8-27b:free` |
-| Embeddings | Nemotron 3 Embed 1B (free) | `nvidia/nemotron-3-embed-1b:free` (2048 dims) |
-| Chat | Qwen3.8 27B (free) | `qwen/qwen3.8-27b:free` |
+| Propósito    | Modelo                     | Slug                                          |
+| ------------ | -------------------------- | --------------------------------------------- |
+| OCR / visión | Qwen3.8 27B (free)         | `qwen/qwen3.8-27b:free`                       |
+| Embeddings   | Nemotron 3 Embed 1B (free) | `nvidia/nemotron-3-embed-1b:free` (2048 dims) |
+| Chat         | Qwen3.8 27B (free)         | `qwen/qwen3.8-27b:free`                       |
 
 ## 10. Decisiones de producto (grill-me 2026-09-26)
 
@@ -130,9 +137,9 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 
 ## 12. Riesgos
 
-| Riesgo | Impacto | Mitigación |
-|---|---|---|
-| Rate limits / modelos free retirados | Alto | Catálogo dinámico + UI de configuración; adapter de proveedor (NIM, etc.); backoff |
-| OCR con errores o campos alucinados | Medio | El humano valida en el formulario (HITL); confianza visible por campo; validación Zod |
-| PDFs escaneados/dañados | Medio | Conversión página→imagen por página; error por página |
-| Embeddings desincronizados tras edición | Medio | Re-embed transaccional en cada guardado |
+| Riesgo                                  | Impacto | Mitigación                                                                            |
+| --------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| Rate limits / modelos free retirados    | Alto    | Catálogo dinámico + UI de configuración; adapter de proveedor (NIM, etc.); backoff    |
+| OCR con errores o campos alucinados     | Medio   | El humano valida en el formulario (HITL); confianza visible por campo; validación Zod |
+| PDFs escaneados/dañados                 | Medio   | Conversión página→imagen por página; error por página                                 |
+| Embeddings desincronizados tras edición | Medio   | Re-embed transaccional en cada guardado                                               |

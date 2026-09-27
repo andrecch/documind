@@ -5,17 +5,25 @@ export const extractionResultSchema = z.object({
   tipo_documento: documentTypeSchema,
   numero: z.string().optional(),
   fecha_emision: z.string().optional(),
-  emisor: z.object({ nombre: z.string().optional(), identificacion: z.string().optional() }).optional(),
-  receptor: z.object({ nombre: z.string().optional(), identificacion: z.string().optional() }).optional(),
+  emisor: z
+    .object({ nombre: z.string().optional(), identificacion: z.string().optional() })
+    .optional(),
+  receptor: z
+    .object({ nombre: z.string().optional(), identificacion: z.string().optional() })
+    .optional(),
   moneda: z.string().length(3).optional(),
   subtotal: z.number().optional(),
   impuestos: z.number().optional(),
   total: z.number().optional(),
-  items: z.array(z.object({
-    concepto: z.string(),
-    cantidad: z.number().optional(),
-    valor: z.number().optional(),
-  })).optional(),
+  items: z
+    .array(
+      z.object({
+        concepto: z.string(),
+        cantidad: z.number().optional(),
+        valor: z.number().optional(),
+      }),
+    )
+    .optional(),
   confianza: z.number().min(0).max(1),
 });
 export type ExtractionResult = z.infer<typeof extractionResultSchema>;

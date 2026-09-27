@@ -32,17 +32,17 @@ docker-compose.yml
 
 ## 3. Stack y justificación
 
-| Capa | Elección | Por qué |
-|---|---|---|
-| Frontend | Next.js 15 App Router, TS strict, Tailwind v4 (mundo Talonario) | SSR + i18n first-class (next-intl) |
-| Estado | zustand + TanStack Query | draft editable en cliente; mutaciones con re-validación |
-| Formulario | React Hook Form + Zod resolver | edición con validación en vivo del esquema compartido |
-| Backend | NestJS 11 (Multer, Swagger) | módulos por dominio del pipeline |
-| ORM | Drizzle (`vector()` nativo, transacciones para re-embed) | pgvector first-class |
-| DB | PostgreSQL 16 + pgvector (`pgvector/pgvector:pg16`) | JSONB + vector en un motor |
-| LLM | Adapter OpenRouter (visión + embeddings + chat, variantes `:free`) | único proveedor free; abstracción para NIM/others |
-| Streaming | SSE para el chat | estable sobre HTTP/1.1, sin WS |
-| Seguridad | AES-256-GCM (node:crypto) | clave cifrada en BD |
+| Capa       | Elección                                                           | Por qué                                                 |
+| ---------- | ------------------------------------------------------------------ | ------------------------------------------------------- |
+| Frontend   | Next.js 15 App Router, TS strict, Tailwind v4 (mundo Talonario)    | SSR + i18n first-class (next-intl)                      |
+| Estado     | zustand + TanStack Query                                           | draft editable en cliente; mutaciones con re-validación |
+| Formulario | React Hook Form + Zod resolver                                     | edición con validación en vivo del esquema compartido   |
+| Backend    | NestJS 11 (Multer, Swagger)                                        | módulos por dominio del pipeline                        |
+| ORM        | Drizzle (`vector()` nativo, transacciones para re-embed)           | pgvector first-class                                    |
+| DB         | PostgreSQL 16 + pgvector (`pgvector/pgvector:pg16`)                | JSONB + vector en un motor                              |
+| LLM        | Adapter OpenRouter (visión + embeddings + chat, variantes `:free`) | único proveedor free; abstracción para NIM/others       |
+| Streaming  | SSE para el chat                                                   | estable sobre HTTP/1.1, sin WS                          |
+| Seguridad  | AES-256-GCM (node:crypto)                                          | clave cifrada en BD                                     |
 
 ## 4. Modelo de datos v2
 
@@ -135,6 +135,7 @@ CREATE TABLE model_config (
 ```
 
 **Seeds:**
+
 ```sql
 INSERT INTO model_config (provider, purpose, model_id, dimensions) VALUES
   ('openrouter','vision',    'qwen/qwen3.8-27b:free',            NULL),
@@ -146,22 +147,22 @@ INSERT INTO model_config (provider, purpose, model_id, dimensions) VALUES
 
 Base `http://localhost:4000/api/v1` · Swagger `/docs`.
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/health` | API + BD + provider config |
-| POST | `/documents` | Upload (multipart) → `201 {id, filename, status}` |
-| GET | `/documents/:id/file` | Original para preview |
-| POST | `/documents/:id/extract` | OCR síncrono (estados + backoff) → draft `{extractionId, docType, confidence, llmData}` |
-| GET | `/documents/:id/extraction` | Ficha (draft o confirmed) |
-| PATCH | `/documents/:id/extraction` | Edita el draft (valida Zod; guarda auditoría de campos tocados) |
-| POST | `/documents/:id/confirm` | **Gate**: valida → genera texto natural → embed padre+ítems → inserta chunks → `ARCHIVADO` |
-| PATCH | `/documents/:id/extraction/confirmed` | Edita un archivado → guarda auditoría → **re-embed** transaccional |
-| GET | `/documents` | Historial (filtros: tipo, estado, fecha) |
-| POST | `/search` | `{query, docType?, from?, to?}` → top-k chunks con documento y fragmento |
-| POST | `/chat` | `{message, sessionId}` → SSE stream con respuesta grounded + `citations[]` |
-| GET | `/settings/models?purpose&free=true` | Catálogo del proveedor |
-| PUT | `/settings/models` | `{purpose, modelId, dimensions?}` |
-| PUT | `/settings/provider` | API key (cifrada) → `{hint}` |
+| Método | Ruta                                  | Descripción                                                                                |
+| ------ | ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| GET    | `/health`                             | API + BD + provider config                                                                 |
+| POST   | `/documents`                          | Upload (multipart) → `201 {id, filename, status}`                                          |
+| GET    | `/documents/:id/file`                 | Original para preview                                                                      |
+| POST   | `/documents/:id/extract`              | OCR síncrono (estados + backoff) → draft `{extractionId, docType, confidence, llmData}`    |
+| GET    | `/documents/:id/extraction`           | Ficha (draft o confirmed)                                                                  |
+| PATCH  | `/documents/:id/extraction`           | Edita el draft (valida Zod; guarda auditoría de campos tocados)                            |
+| POST   | `/documents/:id/confirm`              | **Gate**: valida → genera texto natural → embed padre+ítems → inserta chunks → `ARCHIVADO` |
+| PATCH  | `/documents/:id/extraction/confirmed` | Edita un archivado → guarda auditoría → **re-embed** transaccional                         |
+| GET    | `/documents`                          | Historial (filtros: tipo, estado, fecha)                                                   |
+| POST   | `/search`                             | `{query, docType?, from?, to?}` → top-k chunks con documento y fragmento                   |
+| POST   | `/chat`                               | `{message, sessionId}` → SSE stream con respuesta grounded + `citations[]`                 |
+| GET    | `/settings/models?purpose&free=true`  | Catálogo del proveedor                                                                     |
+| PUT    | `/settings/models`                    | `{purpose, modelId, dimensions?}`                                                          |
+| PUT    | `/settings/provider`                  | API key (cifrada) → `{hint}`                                                               |
 
 **Errores uniformes:** `{ "code", "message", "details" }`.
 
@@ -188,12 +189,20 @@ Base `http://localhost:4000/api/v1` · Swagger `/docs`.
 ```ts
 export interface LLMProvider {
   readonly id: string;
-  extractStructured(input: VisionInput, jsonSchema: object): Promise<{
-    raw: unknown; modelId: string; tokens: { prompt: number; completion: number };
+  extractStructured(
+    input: VisionInput,
+    jsonSchema: object,
+  ): Promise<{
+    raw: unknown;
+    modelId: string;
+    tokens: { prompt: number; completion: number };
   }>;
   embed(inputs: string[]): Promise<number[][]>;
   chatStream(messages: ChatMessage[], opts?: { temperature?: number }): AsyncIterable<string>;
-  listModels(purpose: "vision" | "embedding" | "chat", opts?: { freeOnly?: boolean }): Promise<ProviderModel[]>;
+  listModels(
+    purpose: "vision" | "embedding" | "chat",
+    opts?: { freeOnly?: boolean },
+  ): Promise<ProviderModel[]>;
 }
 ```
 

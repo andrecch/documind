@@ -16,22 +16,22 @@ La pantalla es una **hoja preimpresa del talonario** que la IA de visión rellen
 
 ### Claro (por defecto)
 
-| Token | Valor | Uso |
-|---|---|---|
-| `--bg` | `#F7F4EA` | Mesa/ground de la app |
-| `--sheet` | `#FDFCF8` | Hoja: tarjetas, campos, nav |
-| `--band` | `#EEF1F8` | Bandas de encabezado de campo |
-| `--rule` | `#2E4E9E` | Retícula azul: bordes de campo, dropzone, acento estructural |
-| `--rule-soft` | `#C9D2E8` | Líneas placeholders, seriales decorativos, divisores |
-| `--border` | `#E2DFD2` | Bordes neutros (nav) |
-| `--text` | `#26231E` | Tinta carbón: títulos, datos |
-| `--text-2` | `#55503F` | Texto secundario (≥ 7:1 sobre hoja) |
-| `--text-3` | `#5A6584` | Etiquetas de campo (AA sobre hoja) |
-| `--accent` | `#C03A2B` | Serial, sellos de estado, acciones de énfasis |
-| `--accent-soft` | `#F7E4E1` | Fondo suave del acento |
-| `--success` | `#3D7A4E` | Verificación (confianza, LISTA) |
-| `--carbon` | `#26231E` | La copia carbón (JSON) |
-| `--carbon-text/-soft/-key/-number` | `#D8D2C6` / `#8FB8A6` / `#9AE3C8` / `#F0B86B` | Strings / metadata / claves / números dentro del carbón |
+| Token                              | Valor                                         | Uso                                                          |
+| ---------------------------------- | --------------------------------------------- | ------------------------------------------------------------ |
+| `--bg`                             | `#F7F4EA`                                     | Mesa/ground de la app                                        |
+| `--sheet`                          | `#FDFCF8`                                     | Hoja: tarjetas, campos, nav                                  |
+| `--band`                           | `#EEF1F8`                                     | Bandas de encabezado de campo                                |
+| `--rule`                           | `#2E4E9E`                                     | Retícula azul: bordes de campo, dropzone, acento estructural |
+| `--rule-soft`                      | `#C9D2E8`                                     | Líneas placeholders, seriales decorativos, divisores         |
+| `--border`                         | `#E2DFD2`                                     | Bordes neutros (nav)                                         |
+| `--text`                           | `#26231E`                                     | Tinta carbón: títulos, datos                                 |
+| `--text-2`                         | `#55503F`                                     | Texto secundario (≥ 7:1 sobre hoja)                          |
+| `--text-3`                         | `#5A6584`                                     | Etiquetas de campo (AA sobre hoja)                           |
+| `--accent`                         | `#C03A2B`                                     | Serial, sellos de estado, acciones de énfasis                |
+| `--accent-soft`                    | `#F7E4E1`                                     | Fondo suave del acento                                       |
+| `--success`                        | `#3D7A4E`                                     | Verificación (confianza, LISTA)                              |
+| `--carbon`                         | `#26231E`                                     | La copia carbón (JSON)                                       |
+| `--carbon-text/-soft/-key/-number` | `#D8D2C6` / `#8FB8A6` / `#9AE3C8` / `#F0B86B` | Strings / metadata / claves / números dentro del carbón      |
 
 ### Oscuro (derivado «taller de carbón nocturno»)
 
@@ -39,11 +39,11 @@ La pantalla es una **hoja preimpresa del talonario** que la IA de visión rellen
 
 ## 4. Tipografía (razón de sujeto, no defaults de entrenamiento)
 
-| Cargo | Fuente | Uso |
-|---|---|---|
+| Cargo                                     | Fuente                                            | Uso                                |
+| ----------------------------------------- | ------------------------------------------------- | ---------------------------------- |
 | Rótulos preimpresos, headers de campo, H1 | **Archivo Narrow** 600–800, caps, tracking +1–1.6 | Toda etiqueta uppercase de la hoja |
-| Datos, serial, JSON, placeholders | **Courier Prime** 400–700 | Todo lo que "se escribe a máquina" |
-| Prosa breve (subtítulos, captions) | Archivo Narrow 400 | Texto corrido corto |
+| Datos, serial, JSON, placeholders         | **Courier Prime** 400–700                         | Todo lo que "se escribe a máquina" |
+| Prosa breve (subtítulos, captions)        | Archivo Narrow 400                                | Texto corrido corto                |
 
 Prohibido volver a Inter/Space Grotesk/IBM Plex sin razón nueva de sujeto.
 
@@ -58,11 +58,11 @@ Prohibido volver a Inter/Space Grotesk/IBM Plex sin razón nueva de sujeto.
 
 ## 6. Pantallas
 
-| Ruta | Mundo | Comp |
-|---|---|---|
-| `/es` · `/en` (Subir) | Acción única: header (h1 + tagline del producto + **SheetIllustration**) + Campo «ADJUNTE SU DOCUMENTO» como único protagonista — sin serial decorativo, campos vacíos ni franja de carbón | board E simplificado (decisión del usuario) |
-| `/review` | **Ficha editable (M1)**: V2 · Partida — EL ORIGINAL (visor con zoom/pan, izq.) + formulario editable con inputs talonario e **ItemsGrid** (tabla editable, columnas por tipo de documento, der.); bloque «DATOS EXTRAÍDOS · JSON» como referencia; botón «CONFIRMAR Y ARCHIVAR» sella en rojo | V2 evolucionado (PRD v2) |
-| `/settings` (M2) | Hoja de configuración del mismo talonario (API key cifrada, modelos) | por diseñar — hereda este sistema |
+| Ruta                  | Mundo                                                                                                                                                                                                                                                                                         | Comp                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `/es` · `/en` (Subir) | Acción única: header (h1 + tagline del producto + **SheetIllustration**) + Campo «ADJUNTE SU DOCUMENTO» como único protagonista — sin serial decorativo, campos vacíos ni franja de carbón                                                                                                    | board E simplificado (decisión del usuario) |
+| `/review`             | **Ficha editable (M1)**: V2 · Partida — EL ORIGINAL (visor con zoom/pan, izq.) + formulario editable con inputs talonario e **ItemsGrid** (tabla editable, columnas por tipo de documento, der.); bloque «DATOS EXTRAÍDOS · JSON» como referencia; botón «CONFIRMAR Y ARCHIVAR» sella en rojo | V2 evolucionado (PRD v2)                    |
+| `/settings` (M2)      | Hoja de configuración del mismo talonario (API key cifrada, modelos)                                                                                                                                                                                                                          | por diseñar — hereda este sistema           |
 
 ## 7. i18n y contenido
 

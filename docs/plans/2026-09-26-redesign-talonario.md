@@ -22,32 +22,38 @@
 ## Tasks
 
 ### Task 1 — Tokens y tipografía
+
 - [ ] `globals.css`: reemplazar tokens Aurora por Talonario (claro default + `.dark` derivado); mantener el patrón `@theme inline`.
 - [ ] `apps/web/src/app/[locale]/layout.tsx`: fuentes → `Archivo_Narrow` (600/700/800 → `--font-display`) y `Courier_Prime` (400/700 → `--font-mono`); quitar Space Grotesk/Inter/JetBrains Mono.
 - [ ] `pnpm --filter web add lucide-react`.
 - [ ] Build + commit `feat: talonario design tokens and fonts`.
 
 ### Task 2 — Página Subir (comp E)
+
 - [ ] `upload-dropzone.tsx`: campo 1 reglado (blanco, banda `EEF1F8`, interior con dropzone interior azul punteada), chips JPG/PNG/WEBP/PDF mono azul, icono lucide `Upload`; mensajes i18n del talonario; manejo de rejections actual.
 - [ ] `[locale]/page.tsx`: hoja con serial rojo «SERIE A · Nº 000123» (contador de sesión mock), campos 2-6 en blanco (TIPO con chips de los 5 tipos en gris, FECHA/TOTAL/CONFIANZA en ruleta punteada), fila de copia carbón al pie (dark, JSON de muestra) con «VER COPIA COMPLETA →» deshabilitado.
 - [ ] `navbar.tsx`: logo cuadrado rojo DM, nombre, serial; derecha: ES/EN (i18n), toggle (lucide Sun/Moon), ajustes (lucide Settings).
 - [ ] Verificación playwright-cli: capturas `/es` desktop+mobile → commit `feat: upload page in talonario world`.
 
 ### Task 3 — Página Revisión (comp V2 · Partida)
+
 - [ ] Split 50/50: izquierda «EL ORIGINAL» (imagen inline o PDF pdf.js con sello «LEÍDO» overlay + paginador mono), derecha «LA HOJA RELLENADA» (campos numerados con datos de SAMPLE_EXTRACTION) + «LA COPIA CARBÓN» (strip dark con JSON) + toggle «VER COPIA COMPLETA» que muestra el JSON completo (tokenizado) en el strip expandido.
 - [ ] `json-panel.tsx` → renombrar a `extraction-sheet.tsx` (vista hoja + carbón con resaltado); estados vacío/error con i18n.
 - [ ] Verificación playwright-cli → commit `feat: review page as filled sheet with carbon copy`.
 
 ### Task 4 — i18n y estados
+
 - [ ] `messages/es.json` / `en.json`: copy del talonario (hoja, campos, sellos, carbón); claves theme.* revisadas.
 - [ ] Commit `feat: talonario copy in es/en`.
 
 ### Task 5 — E2E y gates
+
 - [ ] Actualizar `e2e/upload.spec.ts` (selectores por rol/label i18n nuevos).
 - [ ] `pnpm lint && pnpm typecheck && pnpm build && pnpm test && pnpm e2e` → todo verde.
 - [ ] Commit `test: e2e for talonario ui`.
 
 ### Task 6 — Inspección y cierre (impeccable)
+
 - [ ] Capturas batched (desktop 1440 + mobile 390, ambas páginas, `es`) a `.impeccable/review/`.
 - [ ] `node .agents/skills/impeccable/scripts/detect.mjs --json` sobre los targets cambiados; fixes mecánicos.
 - [ ] Spawn `impeccable-finish-reviewer` (input packet completo, sin historial heredado) → actuar por disposition (fix/rebuild/ship).
