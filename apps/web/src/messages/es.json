@@ -1,9 +1,8 @@
 {
   "theme": { "toLight": "Cambiar a tema claro", "toDark": "Cambiar a tema oscuro" },
-  "nav": { "brand": "DOCUMIND", "serial": "SERIE A · Nº 000123", "settings": "Ajustes" },
+  "nav": { "brand": "DOCUMIND", "settings": "Ajustes" },
   "upload": {
-    "sheetTitle": "REGISTRO DE EXTRACCIÓN DE DOCUMENTOS",
-    "sheetSub": "COPIA 1 · EL ORIGINAL SE CONSERVA EN SU EQUIPO",
+    "tagline": "Sube un documento: la IA de visión lo lee, tú corriges y confirmas los campos, y quedan archivados en tu base — consultable por búsqueda y chat.",
     "field1": "ADJUNTE SU DOCUMENTO",
     "dropTitle": "SUELTE AQUÍ SU DOCUMENTO",
     "browse": "o haga clic para buscar en sus archivos",

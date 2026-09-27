@@ -51,7 +51,7 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 > Como usuario, quiero ver los datos que la IA reconoció como formulario con labels e inputs editables — corregirlos si se equivocó — y confirmar el documento para archivarlo en mi base.
 
 - **AC2.1** Split 50/50: original (imagen/PDF paginado) a la izquierda; formulario a la derecha con los campos reconocidos como **inputs editables** (texto, fecha, moneda, números), no como ficha de solo lectura.
-- **AC2.2** Todo editable: valores de campos, ítems de tabla (añadir/eliminar filas) y el **tipo de documento** (si la IA clasificó mal, se corrige antes de confirmar).
+- **AC2.2** Todo editable: valores de campos, **ítems como grid de tabla editable** (columnas definidas por tipo de documento; documentos densos como una declaración DIAN de ~15 columnas × N filas son el caso real), añadir/eliminar filas, y el **tipo de documento** corregible si la IA clasificó mal.
 - **AC2.3** Validación en vivo con el esquema compartido (Zod); campos inválidos marcados sin bloquear la edición.
 - **AC2.4** El botón **«CONFIRMAR Y ARCHIVAR»** solo se activa con el documento válido; al confirmar pasa el estado a `confirmed`.
 - **AC2.5** **Auditoría por campo**: se persiste el valor reconocido (LLM) y el valor confirmado (humano), con diff por campo.

@@ -13,10 +13,6 @@ export function Navbar({ left }: { left?: React.ReactNode }) {
         <span className="font-display text-[22px] font-bold leading-none tracking-[-0.5px] text-text">
           {t("brand")}
         </span>
-        <span className="mx-1 hidden h-5 w-px bg-rule-soft md:block" aria-hidden />
-        <span className="hidden font-mono text-[10.5px] tracking-[1px] text-text-3 md:block">
-          {t("serial")}
-        </span>
       </div>
       <div className="flex items-center gap-2.5">
         <ThemeToggle />

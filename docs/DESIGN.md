@@ -49,9 +49,10 @@ Prohibido volver a Inter/Space Grotesk/IBM Plex sin razón nueva de sujeto.
 
 ## 5. Componentes (`apps/web/src/components`)
 
-- **Navbar** (`navbar.tsx`): cuadrado rojo 24px (logo) + `DOCUMIND` (Archivo Narrow 700, 22px) + divisor + serial mono; derecha: `ThemeToggle` (lucide Sun/Moon) + ajustes (lucide Settings). En Revisión el slot `left` recibe el botón volver (lucide ArrowLeft).
+- **Navbar** (`navbar.tsx`): cuadrado rojo 24px (logo) + `DOCUMIND` (Archivo Narrow 700, 22px); derecha: `ThemeToggle` (lucide Sun/Moon) + ajustes (lucide Settings). En Revisión el slot `left` recibe el botón volver (lucide ArrowLeft). Sin serial decorativo (dato falso — eliminado por decisión del usuario).
+- **SheetIllustration** (`sheet-illustration.tsx`): SVG inline de cabecera en vocabulario talonario — hoja reglada con sello de verificación → flecha → tarjeta de datos (carbón). Toma los tokens del tema (`stroke-rule`, `fill-carbon`, etc.); visible ≥ `md`.
 - **UploadDropzone** (`upload-dropzone.tsx`): caja blanca con banda `EEF1F8` («ADJUNTE SU DOCUMENTO» — sin numeración) y zona interior azul punteada (`m-[10px]`, 300px de alto); activa = borde `--accent` + `bg-accent-soft`; error con `role="alert"` en Courier Prime rojo; chips JPG/PNG/WEBP/PDF mono azul; icono lucide `Upload`. Es el único módulo de la página Subir.
-- **DocumentPreview** (`document-preview.tsx`): «EL ORIGINAL» sobre `bg-band/60`; imagen inline o PDF (pdf.js) con **paginador real** (numPages + chevrons lucide deshabilitados en extremos); estado de carga «PREPARANDO ORIGINAL…» (mono, banda punteada) mientras renderiza; sello «LEÍDO» (border-2 rojo, mono) abajo-izquierda del original.
+- **DocumentPreview** (`document-preview.tsx`): «EL ORIGINAL» sobre `bg-band/60` — **visor real: la imagen/PDF SIEMPRE llena el panel**, zoom 50–400% en pasos de 25% (lucide ZoomIn/ZoomOut + «AJUSTAR» reset), pan con scroll al ampliar; paginador real (numPages + chevrons lucide); estado de carga «PREPARANDO ORIGINAL…»; **sello «LEÍDO» en la cabecera del panel** (nunca sobre el documento).
 - **ExtractionSheet** (`extraction-sheet.tsx`): «LA HOJA RELLENADA POR LA IA DE VISIÓN» — filas numeradas (1 Documento · 2 Tipo [badge rojo doble borde] · 3 Fecha · 4 Total · 5 Emisor/Receptor · 6 Confianza) + ÍTEMS con subtotal/IVA/total; barra de estado como píldora hoja (dot + texto verde); «Copiar» escribe JSON al portapapeles; «Descargar .json»; bloque **«DATOS EXTRAÍDOS · JSON»** al pie: banda oscura con perforaciones, JSON de 1 línea o expandido (tokenizado) con toggle «VER JSON COMPLETO →» / «← VER FORMULARIO».
 - **ThemeToggle** (`theme-toggle.tsx`): next-themes `attribute="class"`, `defaultTheme="light"`.
 
@@ -59,8 +60,8 @@ Prohibido volver a Inter/Space Grotesk/IBM Plex sin razón nueva de sujeto.
 
 | Ruta | Mundo | Comp |
 |---|---|---|
-| `/es` · `/en` (Subir) | Hoja de acción única: header con serial rojo + **Campo «ADJUNTE SU DOCUMENTO»** como único protagonista (sin campos vacíos ni franja de carbón — los campos solo existen rellenados en Revisión) | board E simplificado por decisión del usuario |
-| `/review` | **Ficha editable (M1)**: V2 · Partida — EL ORIGINAL (izq.) + formulario editable con inputs talonario (der.); el bloque «DATOS EXTRAÍDOS · JSON» permanece como referencia durante la edición; botón «CONFIRMAR Y ARCHIVAR» sella en rojo | V2 evolucionado (PRD v2) |
+| `/es` · `/en` (Subir) | Acción única: header (h1 + tagline del producto + **SheetIllustration**) + Campo «ADJUNTE SU DOCUMENTO» como único protagonista — sin serial decorativo, campos vacíos ni franja de carbón | board E simplificado (decisión del usuario) |
+| `/review` | **Ficha editable (M1)**: V2 · Partida — EL ORIGINAL (visor con zoom/pan, izq.) + formulario editable con inputs talonario e **ItemsGrid** (tabla editable, columnas por tipo de documento, der.); bloque «DATOS EXTRAÍDOS · JSON» como referencia; botón «CONFIRMAR Y ARCHIVAR» sella en rojo | V2 evolucionado (PRD v2) |
 | `/settings` (M2) | Hoja de configuración del mismo talonario (API key cifrada, modelos) | por diseñar — hereda este sistema |
 
 ## 7. i18n y contenido

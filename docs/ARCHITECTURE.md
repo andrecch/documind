@@ -204,7 +204,8 @@ export interface LLMProvider {
 ## 8. Estrategia RAG (embeddings + grounding)
 
 - **Texto natural del documento** (padre), generado desde `confirmed_data` con plantilla por tipo de documento, en el idioma del documento: «Factura FAC-2026-0847 emitida por Suministros Andinos S.A. (NIT …) el 2026-09-12, receptor Constructora Delta Ltda., total COP 2.915.500 (impuestos 465.500). Incluye 2 ítems…».
-- **Chunks hijos por ítem** (kind=item, item_index): descripción + cantidad + valor → recall fino para búsqueda de líneas específicas.
+- **Ítems como tabla genérica**: `packages/shared` define `DOC_TYPE_TABLE_SCHEMA` — columnas (key, label, tipo, orden) por tipo de documento. Las filas de `llm_data`/`confirmed_data` son `Array<Record<string, string|number>>`; el prompt del LLM usa los nombres de clave del esquema, la UI (ItemsGrid) renderiza las mismas columnas y el generador de texto natural las recorre. Soporta documentos densos reales (declaración DIAN ~15 columnas × N filas).
+- **Chunks hijos por fila de tabla** (kind=item, item_index=fila): texto natural de la fila con sus columnas etiquetadas → recall fino para líneas específicas.
 - **Retrieval**: kNN coseno (top-k 6 por defecto) + filtros (doc_type, fecha). El padre siempre acompaña a sus hijos en los resultados (dédup por document_id con ranking del mejor chunk).
 - **Chat grounded**: prompt de sistema estricto («responde SOLO con el contexto; si no está, dilo»); cada afirmación mapea a `citations[] {documentId, field|itemIndex}`; SSE streaming; historial de sesión en `chat_messages`.
 

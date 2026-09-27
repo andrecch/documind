@@ -1,9 +1,8 @@
 {
   "theme": { "toLight": "Switch to light theme", "toDark": "Switch to dark theme" },
-  "nav": { "brand": "DOCUMIND", "serial": "SERIE A · Nº 000123", "settings": "Settings" },
+  "nav": { "brand": "DOCUMIND", "settings": "Settings" },
   "upload": {
-    "sheetTitle": "DOCUMENT EXTRACTION REGISTRY",
-    "sheetSub": "COPY 1 · YOUR ORIGINAL STAYS ON YOUR MACHINE",
+    "tagline": "Upload a document: the vision LLM reads it, you review and confirm its fields, and it joins your knowledge base — searchable by search and chat.",
     "field1": "ATTACH YOUR DOCUMENT",
     "dropTitle": "DROP YOUR DOCUMENT HERE",
     "browse": "or click to browse your files",
