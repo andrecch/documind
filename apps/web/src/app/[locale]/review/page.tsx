@@ -24,6 +24,9 @@ export default function ReviewPage() {
 
   return (
     <main className="flex min-h-dvh flex-1 flex-col bg-bg">
+      <h1 className="sr-only">
+        {doc.name} — {t("sheet")}
+      </h1>
       <Navbar
         left={
           <>

@@ -29,7 +29,7 @@ function PdfPreview({
       const pdfjs = await import("pdfjs-dist");
       pdfjs.GlobalWorkerOptions.workerSrc = new URL(
         "pdfjs-dist/build/pdf.worker.min.mjs",
-        import.meta.url
+        import.meta.url,
       ).toString();
       try {
         pdf = await pdfjs.getDocument(url).promise;
@@ -56,7 +56,10 @@ function PdfPreview({
       pdf?.destroy?.();
     };
   }, [url, page, onPages]);
-  if (error) return <div className="p-8 text-center font-mono text-[12px] text-accent">PDF no renderizable</div>;
+  if (error)
+    return (
+      <div className="p-8 text-center font-mono text-[12px] text-accent">PDF no renderizable</div>
+    );
   return (
     <div className="relative">
       <canvas ref={canvasRef} className="h-auto w-full bg-white" />
@@ -149,10 +152,7 @@ export function DocumentPreview({ doc }: { doc: ActiveDoc }) {
         </span>
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
-        <div
-          className="flex min-w-full justify-center py-4"
-          style={{ width: `${zoom * 100}%` }}
-        >
+        <div className="flex min-w-full justify-center py-4" style={{ width: `${zoom * 100}%` }}>
           <div className="w-full px-4">
             {doc.mime === "application/pdf" ? (
               <PdfPreview url={doc.objectUrl} page={page} onPages={setPages} />

@@ -27,19 +27,28 @@ export function UploadDropzone() {
       if (file) {
         const result = validateFile(file);
         if (!result.ok) {
-          setError(result.error === "file-too-large" ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"));
+          setError(
+            result.error === "file-too-large" ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"),
+          );
           return;
         }
-        set({ name: file.name, mime: file.type, size: file.size, objectUrl: URL.createObjectURL(file) });
+        set({
+          name: file.name,
+          mime: file.type,
+          size: file.size,
+          objectUrl: URL.createObjectURL(file),
+        });
         router.push(`/${locale}/review`);
         return;
       }
       const rejection = rejections[0];
       if (!rejection) return;
       const codes = rejection.errors.map((e) => e.code);
-      setError(codes.includes("file-too-large") ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"));
+      setError(
+        codes.includes("file-too-large") ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"),
+      );
     },
-    [set, router, locale, t]
+    [set, router, locale, t],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -66,7 +75,9 @@ export function UploadDropzone() {
         }`}
       >
         <Upload size={34} strokeWidth={1.6} className="text-accent" />
-        <p className="font-mono text-[13.5px] font-bold tracking-[1.2px] text-text">{t("dropTitle")}</p>
+        <p className="font-mono text-[13.5px] font-bold tracking-[1.2px] text-text">
+          {t("dropTitle")}
+        </p>
         <p className="font-mono text-[13px] text-text-2">{t("browse")}</p>
         <div className="mt-1 flex gap-2">
           {["JPG", "PNG", "WEBP", "PDF"].map((f) => (

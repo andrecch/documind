@@ -15,6 +15,11 @@ type ActiveDocState = {
 
 export const useActiveDoc = create<ActiveDocState>((set) => ({
   doc: null,
-  set: (doc) => set({ doc }),
+  // Revoca el blob anterior al reemplazarlo (máximo 1 objectUrl vivo por sesión)
+  set: (doc) =>
+    set((s) => {
+      if (s.doc) URL.revokeObjectURL(s.doc.objectUrl);
+      return { doc };
+    }),
   clear: () => set({ doc: null }),
 }));

@@ -1,33 +1,26 @@
 "use client";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { ExtractionResult } from "@documind/shared";
+import { tokenizeJsonLine, type JsonTokenKind } from "@/lib/json-highlight";
 
-function renderCarbonLine(line: string, ix: number) {
-  const re = /"(?:\\.|[^"\\])*"(\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?|./g;
-  const out: React.ReactNode[] = [];
-  let m: RegExpExecArray | null;
-  let k = 0;
-  while ((m = re.exec(line))) {
-    const tok = m[0];
-    const colon = m[1];
-    const cls = tok.startsWith('"')
-      ? colon
-        ? "text-carbon-key"
-        : "text-carbon-text"
-      : /^(true|false|null)$/.test(tok)
-        ? "text-carbon-number"
-        : /^-?\d/.test(tok)
-          ? "text-carbon-number"
-          : "text-carbon-soft";
-    out.push(
-      <span key={`${ix}-${k++}`} className={cls}>
-        {tok}
-      </span>
-    );
-    if (re.lastIndex === m.index) re.lastIndex++;
-  }
-  return out;
+const TOKEN_CLASS: Record<JsonTokenKind, string> = {
+  key: "text-carbon-key",
+  string: "text-carbon-text",
+  number: "text-carbon-number",
+  punct: "text-carbon-soft",
+};
+
+function CarbonLine({ line, ix }: { line: string; ix: number }) {
+  return (
+    <div>
+      {tokenizeJsonLine(line).map((t, k) => (
+        <span key={`${ix}-${k}`} className={TOKEN_CLASS[t.kind]}>
+          {t.text}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -46,15 +39,20 @@ export function ExtractionSheet({ value, docName }: { value: ExtractionResult; d
   const t = useTranslations("review");
   const locale = useLocale();
   const [full, setFull] = useState(false);
+  const [copied, setCopied] = useState(false);
   const text = JSON.stringify(value, null, 2);
+  const carbonLines = useMemo(() => text.split("\n"), [text]);
   const num = (n: number) => new Intl.NumberFormat(locale).format(n);
 
   const onCopy = async () => {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
   };
-  const [copied, setCopied] = useState(false);
 
   const onDownload = () => {
     const a = document.createElement("a");
@@ -176,8 +174,8 @@ export function ExtractionSheet({ value, docName }: { value: ExtractionResult; d
         <div className="bg-carbon px-6 py-4">
           {full ? (
             <pre className="max-h-[46vh] overflow-auto font-mono text-[11.5px] leading-[1.6]">
-              {text.split("\n").map((l, ix) => (
-                <div key={ix}>{renderCarbonLine(l, ix)}</div>
+              {carbonLines.map((l, ix) => (
+                <CarbonLine key={ix} line={l} ix={ix} />
               ))}
             </pre>
           ) : (
@@ -186,9 +184,11 @@ export function ExtractionSheet({ value, docName }: { value: ExtractionResult; d
                 {t("extracted")}
               </p>
               <p className="mt-1 truncate font-mono text-[11.5px] text-carbon-text">
-                {'{"tipo_documento": "'}{value.tipo_documento}{'", "total": '}
+                {'{"tipo_documento": "'}
+                {value.tipo_documento}
+                {'", "total": '}
                 {value.total == null ? "…" : num(value.total)}
-                {", \"confianza\": "}
+                {', "confianza": '}
                 {value.confianza}
                 {"}"}
               </p>

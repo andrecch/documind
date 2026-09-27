@@ -7,7 +7,7 @@ test("1×1 PNG → /es/review muestra la hoja rellenada y los datos extraídos",
   await expect(page.getByRole("button", { name: "Cambiar a tema oscuro" })).toBeVisible();
   await page.locator('input[type="file"]').setInputFiles("e2e/fixtures/sample.png");
   await expect(page).toHaveURL(/\/es\/review$/, { timeout: 15_000 });
-  await expect(page.getByText("HOJA RELLENADA POR LA IA DE VISIÓN")).toBeVisible();
+  await expect(page.getByText("HOJA RELLENADA POR LA IA DE VISIÓN", { exact: true })).toBeVisible();
   await expect(page.getByText("DATOS EXTRAÍDOS · JSON")).toBeVisible();
   const copyBtn = page.getByRole("button", { name: "COPIAR" });
   await copyBtn.click();
@@ -30,9 +30,9 @@ test("el JSON completo se expande y vuelve al formulario", async ({ page }) => {
   await page.goto("/es");
   await expect(page.getByRole("button", { name: "Cambiar a tema oscuro" })).toBeVisible();
   await page.locator('input[type="file"]').setInputFiles("e2e/fixtures/sample.png");
-  await expect(page).toHaveURL(/\/es\/review$/);
+  await expect(page).toHaveURL(/\/es\/review$/, { timeout: 15_000 });
   await page.getByRole("button", { name: /VER JSON COMPLETO/ }).click();
   await expect(page.getByText('"tipo_documento": "factura"')).toBeVisible();
   await page.getByRole("button", { name: /VER FORMULARIO/ }).click();
-  await expect(page.getByText("HOJA RELLENADA POR LA IA DE VISIÓN")).toBeVisible();
+  await expect(page.getByText("HOJA RELLENADA POR LA IA DE VISIÓN", { exact: true })).toBeVisible();
 });
