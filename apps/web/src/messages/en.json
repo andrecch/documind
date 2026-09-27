@@ -4,33 +4,17 @@
   "upload": {
     "sheetTitle": "DOCUMENT EXTRACTION REGISTRY",
     "sheetSub": "COPY 1 · YOUR ORIGINAL STAYS ON YOUR MACHINE",
-    "field1": "1 · ATTACH DOCUMENT — IMAGE OR PDF",
+    "field1": "ATTACH YOUR DOCUMENT",
     "dropTitle": "DROP YOUR DOCUMENT HERE",
     "browse": "or click to browse your files",
-    "caption": "The sheet fills itself: the vision LLM reads the attachment and completes the fields. You review, stamp and archive.",
+    "caption": "The sheet fills itself: the vision LLM reads the attachment and completes the fields with your real data. You review, stamp and archive.",
     "unsupported": "Unsupported format. Use JPG, PNG, WEBP or PDF.",
-    "tooLarge": "File exceeds {maxMb} MB.",
-    "fields": {
-      "tipo": "2 · DOCUMENT TYPE",
-      "fecha": "3 · DATE",
-      "total": "4 · TOTAL",
-      "emisor": "5 · ISSUER / RECIPIENT",
-      "confianza": "6 · READING CONFIDENCE"
-    },
-    "datePlaceholder": "____ / ____ / ________",
-    "totalPlaceholder": "$ ________.____",
-    "emisorPlaceholder": "ISSUER    ______________________________",
-    "receptorPlaceholder": "RECIPIENT _____________________________",
-    "confPlaceholder": "0.____"
-  },
-  "carbon": {
-    "title": "CARBON COPY · EXTRACTED DATA",
-    "hint": "THE CARBON COPY IS DELIVERED ON EXTRACTION (M1)",
-    "model": "qwen/qwen3.8-27b:free · reading pending"
+    "tooLarge": "File exceeds {maxMb} MB."
   },
   "review": {
     "back": "Back",
     "status": "READING COMPLETED",
+    "preparing": "PREPARING THE ORIGINAL…",
     "original": "THE ORIGINAL",
     "page": "PAGE {page} / {total}",
     "read": "READ",
@@ -38,8 +22,8 @@
     "copy": "COPY",
     "copied": "COPIED!",
     "download": "DOWNLOAD .JSON",
-    "carbon": "THE CARBON COPY · JSON",
-    "full": "VIEW FULL CARBON COPY →",
+    "extracted": "EXTRACTED DATA · JSON",
+    "full": "VIEW FULL JSON →",
     "form": "← VIEW FORM",
     "empty": "No active document. Upload one to get started.",
     "f1": "1 · DOCUMENT",

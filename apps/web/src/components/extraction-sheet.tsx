@@ -183,7 +183,7 @@ export function ExtractionSheet({ value, docName }: { value: ExtractionResult; d
           ) : (
             <>
               <p className="font-display text-[10.5px] font-bold uppercase tracking-[1.4px] text-carbon-key">
-                {t("carbon")}
+                {t("extracted")}
               </p>
               <p className="mt-1 truncate font-mono text-[11.5px] text-carbon-text">
                 {'{"tipo_documento": "'}{value.tipo_documento}{'", "total": '}

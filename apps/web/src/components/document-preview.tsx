@@ -15,6 +15,8 @@ function PdfPreview({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState(false);
+  const [ready, setReady] = useState(false);
+  const tLoading = useTranslations("review");
   const pagesRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +42,7 @@ function PdfPreview({
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
         await pageDoc.render({ canvasContext: ctx, viewport }).promise;
+        if (!cancelled) setReady(true);
       } catch {
         if (!cancelled) setError(true);
       }
@@ -50,7 +53,16 @@ function PdfPreview({
     };
   }, [url, page, onPages]);
   if (error) return <div className="font-mono text-[12px] text-text-3">PDF no renderizable</div>;
-  return <canvas ref={canvasRef} className="max-h-full max-w-[420px] bg-white shadow-sm" />;
+  return (
+    <div className="relative">
+      <canvas ref={canvasRef} className="max-h-full max-w-[420px] bg-white shadow-sm" />
+      {!ready && (
+        <span className="absolute inset-0 flex items-center justify-center bg-band/80 px-4 text-center font-mono text-[11px] tracking-[1.2px] text-text-2">
+          {tLoading("preparing")}
+        </span>
+      )}
+    </div>
+  );
 }
 
 /** Mitad izquierda (comp V2): el original sobre la mesa, con sello LEÍDO y paginador real. */
@@ -58,6 +70,8 @@ export function DocumentPreview({ doc }: { doc: ActiveDoc }) {
   const t = useTranslations("review");
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+  const [imgReady, setImgReady] = useState(false);
+  const [imgError, setImgError] = useState(false);
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col bg-band/60">
       <div className="flex h-10 items-center justify-between px-6">
@@ -93,12 +107,29 @@ export function DocumentPreview({ doc }: { doc: ActiveDoc }) {
           {doc.mime === "application/pdf" ? (
             <PdfPreview url={doc.objectUrl} page={page} onPages={setPages} />
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={doc.objectUrl}
-              alt={doc.name}
-              className="max-h-[72vh] max-w-[560px] border-[1.5px] border-rule bg-white"
-            />
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {imgError ? (
+                <div className="flex min-h-24 min-w-56 items-center justify-center border border-dashed border-rule-soft bg-sheet/80 px-4 font-mono text-[11px] tracking-[1.2px] text-accent">
+                  {t("empty")}
+                </div>
+              ) : (
+                <>
+                  <img
+                    src={doc.objectUrl}
+                    alt={doc.name}
+                    onLoad={() => setImgReady(true)}
+                    onError={() => setImgError(true)}
+                    className={`max-h-[72vh] max-w-[560px] border-[1.5px] border-rule bg-white ${imgReady && !imgError ? "" : "opacity-0"}`}
+                  />
+                  {!imgReady && !imgError && (
+                    <span className="absolute inset-0 -top-2 flex min-h-24 min-w-56 items-center justify-center border border-dashed border-rule-soft bg-sheet/80 px-4 text-center font-mono text-[11px] tracking-[1.2px] text-text-2">
+                      {t("preparing")}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
           )}
           <span className="absolute bottom-3 left-3 rounded-[3px] border-2 border-accent bg-sheet/90 px-3 py-1.5 font-mono text-[11px] font-bold tracking-[1.4px] text-accent">
             {t("read")}

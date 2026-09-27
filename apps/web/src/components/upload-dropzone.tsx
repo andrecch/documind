@@ -61,13 +61,13 @@ export function UploadDropzone() {
         </span>
       </div>
       <div
-        className={`flex h-[236px] flex-col items-center justify-center gap-2.5 border-[1.5px] border-dashed transition ${
-          isDragActive ? "border-accent bg-accent-soft" : "border-drop m-[10px] border-rule/50"
+        className={`m-[10px] flex h-[300px] flex-col items-center justify-center gap-3 border-[1.5px] border-dashed transition ${
+          isDragActive ? "border-accent bg-accent-soft" : "border-rule/50"
         }`}
       >
-        <Upload size={30} strokeWidth={1.6} className="text-accent" />
-        <p className="font-mono text-[13px] font-bold tracking-[1.2px] text-text">{t("dropTitle")}</p>
-        <p className="font-mono text-[12.5px] text-text-2">{t("browse")}</p>
+        <Upload size={34} strokeWidth={1.6} className="text-accent" />
+        <p className="font-mono text-[13.5px] font-bold tracking-[1.2px] text-text">{t("dropTitle")}</p>
+        <p className="font-mono text-[13px] text-text-2">{t("browse")}</p>
         <div className="mt-1 flex gap-2">
           {["JPG", "PNG", "WEBP", "PDF"].map((f) => (
             <span
