@@ -35,7 +35,7 @@ La pantalla es una **hoja preimpresa del talonario** que la IA de visión rellen
 
 ### Oscuro (derivado «taller de carbón nocturno»)
 
-`--bg #14110C` · `--sheet #26231E` · `--band #33302A` · `--rule #7A93C9` · `--text #F5EFE2` · `--text-2 #C0B8A4` · `--text-3 #A8A091` · `--accent #D95A4A` · `--success #7BC98F` · `--carbon #0E0D0B` (carbón más profundo que la hoja).
+`--bg #14110C` · `--sheet #26231E` · `--band #33302A` · `--rule #8AA0D4` · `--text #F5EFE2` · `--text-2 #C0B8A4` · `--text-3 #A8A091` · `--accent #D95A4A` · `--success #7BC98F` · `--carbon #0E0D0B` (carbón más profundo que la hoja).
 
 ## 4. Tipografía (razón de sujeto, no defaults de entrenamiento)
 
@@ -50,25 +50,23 @@ Prohibido volver a Inter/Space Grotesk/IBM Plex sin razón nueva de sujeto.
 ## 5. Componentes (`apps/web/src/components`)
 
 - **Navbar** (`navbar.tsx`): cuadrado rojo 24px (logo) + `DOCUMIND` (Archivo Narrow 700, 22px) + divisor + serial mono; derecha: `ThemeToggle` (lucide Sun/Moon) + ajustes (lucide Settings). En Revisión el slot `left` recibe el botón volver (lucide ArrowLeft).
-- **Campo 1 · UploadDropzone** (`upload-dropzone.tsx`): caja blanca con banda `EEF1F8` («1 · ADJUNTE DOCUMENTO») y zona interior azul punteada (`m-[10px]`); activa = borde `--accent` + `bg-accent-soft`; error con `role="alert"` en Courier Prime rojo; chips JPG/PNG/WEBP/PDF mono azul; icono lucide `Upload`.
-- **RuledFields** (`ruled-fields.tsx`): campos 2–6 con banda + serial esquinero; placeholders punteados en `rule-soft`; filas apilables (`flex-col md:flex-row`).
-- **DocumentPreview** (`document-preview.tsx`): «EL ORIGINAL» sobre `bg-band/60`; imagen inline o PDF (pdf.js) con **paginador real** (numPages + chevrons lucide deshabilitados en extremos); sello «LEÍDO» (border-2 rojo, mono) abajo-izquierda del original.
-- **ExtractionSheet** (`extraction-sheet.tsx`): «LA HOJA RELLENADA POR LA IA DE VISIÓN» — filas numeradas (1 Documento · 2 Tipo [badge rojo doble borde] · 3 Fecha · 4 Total · 5 Emisor/Receptor · 6 Confianza) + ÍTEMS con subtotal/IVA/total; barra de estado como píldora hoja (dot + texto verde); «Copiar» escribe JSON al portapapeles; «Descargar .json»; **copia carbón** al pie: banda oscura con perforaciones, JSON de 1 línea o expandido (tokenizado) con toggle «VER COPIA COMPLETA →» / «← VER FORMULARIO».
-- **CarbonStrip** (`carbon-strip.tsx`): versión estática de la copia carbón para la página Subir (estado M0: muestra literal en código, no en i18n — ICU no acepta llaves).
+- **UploadDropzone** (`upload-dropzone.tsx`): caja blanca con banda `EEF1F8` («ADJUNTE SU DOCUMENTO» — sin numeración) y zona interior azul punteada (`m-[10px]`, 300px de alto); activa = borde `--accent` + `bg-accent-soft`; error con `role="alert"` en Courier Prime rojo; chips JPG/PNG/WEBP/PDF mono azul; icono lucide `Upload`. Es el único módulo de la página Subir.
+- **DocumentPreview** (`document-preview.tsx`): «EL ORIGINAL» sobre `bg-band/60`; imagen inline o PDF (pdf.js) con **paginador real** (numPages + chevrons lucide deshabilitados en extremos); estado de carga «PREPARANDO ORIGINAL…» (mono, banda punteada) mientras renderiza; sello «LEÍDO» (border-2 rojo, mono) abajo-izquierda del original.
+- **ExtractionSheet** (`extraction-sheet.tsx`): «LA HOJA RELLENADA POR LA IA DE VISIÓN» — filas numeradas (1 Documento · 2 Tipo [badge rojo doble borde] · 3 Fecha · 4 Total · 5 Emisor/Receptor · 6 Confianza) + ÍTEMS con subtotal/IVA/total; barra de estado como píldora hoja (dot + texto verde); «Copiar» escribe JSON al portapapeles; «Descargar .json»; bloque **«DATOS EXTRAÍDOS · JSON»** al pie: banda oscura con perforaciones, JSON de 1 línea o expandido (tokenizado) con toggle «VER JSON COMPLETO →» / «← VER FORMULARIO».
 - **ThemeToggle** (`theme-toggle.tsx`): next-themes `attribute="class"`, `defaultTheme="light"`.
 
 ## 6. Pantallas
 
 | Ruta | Mundo | Comp |
 |---|---|---|
-| `/es` · `/en` (Subir) | Hoja del talonario: header con serial rojo, Campo 1, campos 2–6 en blanco, carbón estático al pie | board E |
-| `/review` | V2 · Partida: EL ORIGINAL (izq.) + HOJA RELLENADA + carbón (der.) | V2 |
+| `/es` · `/en` (Subir) | Hoja de acción única: header con serial rojo + **Campo «ADJUNTE SU DOCUMENTO»** como único protagonista (sin campos vacíos ni franja de carbón — los campos solo existen rellenados en Revisión) | board E simplificado por decisión del usuario |
+| `/review` | V2 · Partida: EL ORIGINAL (izq.) + HOJA RELLENADA + bloque «DATOS EXTRAÍDOS · JSON» (der.) | V2 |
 | `/settings` (M2) | Hoja de configuración del mismo talonario (API key cifrada, modelos) | por diseñar — hereda este sistema |
 
 ## 7. i18n y contenido
 
 - Copy por pantalla en `src/messages/{es,en.json}`; todo texto visible pasa por `next-intl` (es default).
-- Registro: la UI habla en primera persona del formulario («Suelte aquí su documento», «La hoja se llena sola»). Los datos de muestra viven en `@documind/shared` (`SAMPLE_EXTRACTION`), no en los mensajes.
+- Registro: la UI habla en primera persona del formulario («Suelte aquí su documento», «La hoja se llena sola»). Los datos de muestra viven en `@documind/shared` (`SAMPLE_EXTRACTION`), no en los mensajes — y **nunca se muestran datos falsos ni placeholders de valores**: la Subir solo promete con su copy, no con tarjetas vacías.
 
 ## 8. Accesibilidad (verificada en el finish review)
 
@@ -78,8 +76,9 @@ Prohibido volver a Inter/Space Grotesk/IBM Plex sin razón nueva de sujeto.
 
 ## 9. Reglas de continuidad (para páginas nuevas)
 
-1. Toda pantalla nueva es una hoja del mismo talonario: banda de encabezado con número de campo, caja blanca, retícula azul, serial rojo para estados/identificadores.
-2. JSON y datos SIEMPRE en Courier Prime dentro de la copia carbón (`bg-carbon`), con la paleta de 4 colores del carbón.
-3. Nada de glows, glass, gradientes ni fondos oscuros en claro; el carbón es el único bloque oscuro permitido.
+1. Toda pantalla nueva es una hoja del mismo talonario: banda de encabezado, caja blanca, retícula azul, serial rojo para estados/identificadores.
+2. JSON y datos SIEMPRE en Courier Prime dentro del bloque oscuro «DATOS EXTRAÍDOS» (`bg-carbon`), con la paleta de 4 colores de datos (`--carbon-key/-text/-soft/-number`). Ese bloque oscuro solo aparece donde hay datos reales.
+3. Nada de glows, glass, gradientes ni fondos oscuros en claro; el bloque «DATOS EXTRAÍDOS» es el único oscuro permitido.
 4. Iconos: lucide, `strokeWidth 1.8`.
 5. Estados: sello rojo (completado/aprobado), rule-soft (pendiente), rojo Courier bold (error).
+6. **No se muestran campos ni valores vacíos como si existieran**: una pantalla muestra solo lo que tiene datos reales; lo pendiente se comunica con copy, no con tarjetas placeholder.
