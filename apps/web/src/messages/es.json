@@ -1,4 +1,18 @@
 {
+  "metadata": {
+    "title": "DocuMind — tu base de documentos con IA",
+    "description": "Sube documentos, confirma los datos extraídos por IA de visión y consúltalos por búsqueda semántica y chat."
+  },
+  "error": {
+    "title": "Algo salió mal",
+    "body": "Ocurrió un error inesperado.",
+    "retry": "Reintentar"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "body": "La página que buscas no existe.",
+    "home": "Volver al inicio"
+  },
   "theme": { "toLight": "Cambiar a tema claro", "toDark": "Cambiar a tema oscuro" },
   "nav": { "brand": "DOCUMIND", "settings": "Ajustes" },
   "upload": {

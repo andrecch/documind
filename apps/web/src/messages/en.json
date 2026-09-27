@@ -1,4 +1,18 @@
 {
+  "metadata": {
+    "title": "DocuMind — your AI document knowledge base",
+    "description": "Upload documents, confirm the data extracted by vision AI, and query them by semantic search and chat."
+  },
+  "error": {
+    "title": "Something went wrong",
+    "body": "An unexpected error occurred.",
+    "retry": "Retry"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you are looking for does not exist.",
+    "home": "Back to start"
+  },
   "theme": { "toLight": "Switch to light theme", "toDark": "Switch to dark theme" },
   "nav": { "brand": "DOCUMIND", "settings": "Settings" },
   "upload": {

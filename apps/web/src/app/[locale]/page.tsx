@@ -1,4 +1,7 @@
+import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { routing } from "@/i18n/routing";
 import { Navbar } from "@/components/navbar";
 import { SheetIllustration } from "@/components/sheet-illustration";
 import { UploadDropzone } from "@/components/upload-dropzone";
@@ -7,6 +10,7 @@ type Props = { params: Promise<{ locale: string }> };
 
 export default async function UploadPage({ params }: Props) {
   const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
   const t = await getTranslations();
   return (
