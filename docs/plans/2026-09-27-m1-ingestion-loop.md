@@ -3,6 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: usa la skill local `executing-plans` para ejecutar este plan tarea por tarea. Steps con checkbox (`- [ ]`).
 > **Nota de commits:** cada task termina con su commit semántico (convención Conventional Commits, `main`); preguntar al usuario antes de ejecutar los commits.
 > **Update 2026-09-27:** plan verificado contra el estado real del repo tras el hardening web (commits `bc8265a`, `65c348e`, `75aa518` en `main`, ya empujados a `origin`). Decisiones cerradas — ver tabla abajo.
+> **Update 2026-09-28 (sesión M1-1):** Tasks 1–3 completadas y commiteadas (`6a03cef`, `d24be11`, `ecf2665`). Ver `AGENTS.md` raíz para runbook y convenciones críticas de tsx/Swagger/DI. Migración 0000 usa índice HNSW con `halfvec(2048)` — pgvector HNSW no admite >2000 dims nativamente. Task 4 reescrita en detalle (S1–S7).
 
 **Goal:** Loop completo de ingesta de extremo a extremo: subir documento → OCR con LLM de visión (Qwen3.8 27B `:free` de OpenRouter) → ficha editable talonario (labels + inputs + grid de ítems) → «CONFIRMAR Y ARCHIVAR» (gate) → embeddings padre+ítems → Postgres+pgvector. Sin chat ni búsqueda (M2).
 
@@ -128,12 +129,15 @@ apps/web/e2e/ingesta.spec.ts              (flujo completo mockeado)
 
 ### Task 4: Pipeline OCR (M1.3)
 
-**Files:** `src/extractions/{pipeline.ts,pdf-renderer.ts,provider.factory.ts,embed.ts}`
+**Files:** `apps/api/src/extractions/{pdf-renderer.ts,llm-schema.ts,provider.ts,extraction.controller.ts,extraction.service.ts}`
 
-- [ ] **S1:** `pdf-renderer.ts` con `pdf-to-img` (todas las páginas, cap 8 → si más, lanza error de negocio 422 con mensaje i18n).
-- [ ] **S2:** `provider.factory.ts`: adapter `OpenRouterProvider` vía **`@openrouter/sdk`** (o fetch directo a `https://openrouter.ai/api/v1` según doc oficial; ver ARCHITECTURE §7). `extractStructured` requiere imagen(es) dataURLs + JSON Schema de Zod v2; registra tokens. Backoff exponencial 429/500 (Jitter, máximo 5 reintentos). API key desde env (decisión 11). MapError a errores de negocio 502 con cuerpo uniforme.
-- [ ] **S3:** `pipeline.ts` (semáforo en memoria, decision 13): `POST /documents/:id/extract` → status processing → render → provider → parse+validate llm_data (Zod) → insert extractions (draft, llm_data) + revision `created` (actor llm) → status ready_for_review. Si el doc ya tenía una extracción, re-extract la reemplaza y registra una nueva revisión `created`.
-- [ ] **S4:** Tests unitarios del pipeline con **fake providers** (OCR fake que devuelve SAMPLE, embeddings fake matriz determinística) — sin llamadas reales. Backoff test con server que devuelve 429 dos veces y 200. commit `feat: ocr pipeline with pdf rendering, openrouter adapter and extraction semaphore`.
+- [ ] **S1 (renderer):** `pdf-renderer.ts` — dep `pdf-to-img` (@napi-rs/canvas prebuilt). `renderPdf(buffer): Promise<Buffer[]>` (PNG por página). Cap 8 páginas → error de negocio 422 `{code:"TOO_MANY_PAGES"}`. Test con PDF fixture de 1 página (base64 hardcodeado) + test del cap con iterator simulado de N páginas.
+- [ ] **S2 (schema LLM):** `llm-schema.ts` — JSON Schema manual espejo de `extractionResultSchema` (Zod v2) para el LLM: campos raíz + items como array de objetos con las claves según `DOC_TYPE_TABLE_SCHEMA` del doc_type (las columnas se describen en el prompt system, no en el schema). Sin dependencias extra. Al volver, validar con `validateExtraction` (shared) que descarta claves de fila fuera del schema.
+- [ ] **S3 (adapter):** `provider.ts` — `OpenRouterProvider implements LLMProvider` con **@openrouter/sdk** (alternativa doc oficial: fetch a `https://openrouter.ai/api/v1` con Bearer key). extractStructured: no-stream, imágenes dataURL + `response_format: json_schema`; si el JSON viene malformado → 1 retry con prompt de corrección; tokens desde `usage`. Backoff exponencial + jitter, máx 5 intentos, ante 429/5xx/timeout. API key desde env (decisión 11). `FakeProvider` (DOCUMIND_FAKE_PROVIDERS=1): extractStructured → extracción sample coherente con el schema; embed → hash determinístico → vector 2048 L2-normalizado; chatStream → throw "M2". Factoría con token DI `PROVIDER` que resuelve Fake|OpenRouter según env.
+- [ ] **S4 (pipeline):** `extraction.service.ts` + controller — `POST /documents/:id/extract`: semáforo en memoria (acquire/release, max 1) → 409 `{code:"EXTRACTION_IN_PROGRESS"}` si ocupado → documents.status=`processing` → render → provider → `validateExtraction` → upsert extraction (re-extract reemplaza: delete+insert) + revisión `created` (actor "llm", llm_data snapshot) → documents.status=`ready_for_review` + page_count → responde `{extractionId, docType, confidence, llmData}`. Errores: 404 doc · 422 páginas · 502 `{code:"LLM_ERROR"}` + documents.status=`error` si el provider falla tras backoff.
+- [ ] **S5 (ficha):** `GET /documents/:id/extraction` → según estado: draft → llm_data; confirmed → confirmed_data + field_audit. Responde `{extraction, status, tokens}`. 404 si no hay extracción.
+- [ ] **S6 (tests):** e2e vitest con FakeProvider: upload→extract→ficha (campos presentes, revisión `created` insertada, status ready_for_review); 409 reteniendo el semáforo a mano; backoff test con server local efímero que responde 429,429,200 (sin deps extra).
+- [ ] **S7 (gates):** typecheck/lint/test/format/build en verde. Verificación manual con curl y DOCUMIND_FAKE_PROVIDERS=1 (sin cuota). Commit: `feat: ocr pipeline with pdf rendering, openrouter adapter and extraction semaphore`.
 
 ### Task 5: Ficha editable (M1.4)
 
