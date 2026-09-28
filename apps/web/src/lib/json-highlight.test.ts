@@ -3,8 +3,8 @@ import { tokenizeJsonLine } from "./json-highlight";
 
 describe("tokenizeJsonLine", () => {
   it("separa clave (con dos puntos), espacio y valor string", () => {
-    const tokens = tokenizeJsonLine('"tipo_documento": "factura",');
-    expect(tokens.map((t) => t.text)).toEqual(['"tipo_documento":', " ", '"factura"', ","]);
+    const tokens = tokenizeJsonLine('"doc_type": "factura",');
+    expect(tokens.map((t) => t.text)).toEqual(['"doc_type":', " ", '"factura"', ","]);
     expect(tokens.map((t) => t.kind)).toEqual(["key", "punct", "string", "punct"]);
   });
 

@@ -1,7 +1,8 @@
 "use client";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import type { ExtractionResult } from "@documind/shared";
+import type { ExtractionResult, TableColumn } from "@documind/shared";
+import { getTablesForDocType } from "@documind/shared";
 import { tokenizeJsonLine, type JsonTokenKind } from "@/lib/json-highlight";
 
 const TOKEN_CLASS: Record<JsonTokenKind, string> = {
@@ -102,7 +103,7 @@ export function ExtractionSheet({ value, docName }: { value: ExtractionResult; d
               </Row>
               <Row label={t("f2")}>
                 <span className="inline-block rounded-[2px] border-2 border-accent px-2.5 py-0.5 font-mono text-[12px] font-bold uppercase tracking-[1.2px] text-accent">
-                  {value.tipo_documento}
+                  {value.doc_type}
                 </span>
               </Row>
               <Row label={t("f3")}>
@@ -141,12 +142,23 @@ export function ExtractionSheet({ value, docName }: { value: ExtractionResult; d
                     {t("items")} ({value.items.length})
                   </p>
                   <div className="mt-1 flex flex-col gap-1">
-                    {value.items.map((item, ix) => (
-                      <p key={ix} className="font-mono text-[11.5px] text-text">
-                        {ix + 1} · {item.concepto}
-                        {item.valor != null ? ` — ${num(item.valor)}` : ""}
-                      </p>
-                    ))}
+                    {value.items.map((row, ix) => {
+                      const table = getTablesForDocType(value.doc_type)[0];
+                      const textColumn = table?.columns.find((c: TableColumn) => c.type === "text");
+                      const valueColumn = [...(table?.columns ?? [])]
+                        .reverse()
+                        .find((c: TableColumn) => c.type !== "text");
+                      const text = textColumn ? row[textColumn.key] : undefined;
+                      const amount = valueColumn ? row[valueColumn.key] : undefined;
+                      return (
+                        <p key={ix} className="font-mono text-[11.5px] text-text">
+                          {ix + 1} · {text == null || text === "" ? "—" : text}
+                          {amount != null
+                            ? ` — ${typeof amount === "number" ? num(amount) : amount}`
+                            : ""}
+                        </p>
+                      );
+                    })}
                     <div className="mt-1 flex items-center justify-between border-t border-rule-soft pt-1.5">
                       <span className="font-mono text-[11px] text-text-2">
                         {t("subtotal", {
@@ -184,8 +196,8 @@ export function ExtractionSheet({ value, docName }: { value: ExtractionResult; d
                 {t("extracted")}
               </p>
               <p className="mt-1 truncate font-mono text-[11.5px] text-carbon-text">
-                {'{"tipo_documento": "'}
-                {value.tipo_documento}
+                {'{"doc_type": "'}
+                {value.doc_type}
                 {'", "total": '}
                 {value.total == null ? "…" : num(value.total)}
                 {', "confianza": '}

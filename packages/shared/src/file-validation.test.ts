@@ -31,15 +31,15 @@ describe("validateFile", () => {
 
 describe("extractionResultSchema", () => {
   it("parsea la extracción de muestra", () => {
-    expect(extractionResultSchema.parse(SAMPLE_EXTRACTION).tipo_documento).toBe("factura");
+    expect(extractionResultSchema.parse(SAMPLE_EXTRACTION).doc_type).toBe("factura");
   });
   it("rechaza un tipo de documento desconocido", () => {
-    expect(extractionResultSchema.safeParse({ tipo_documento: "tomografia" }).success).toBe(false);
+    expect(extractionResultSchema.safeParse({ doc_type: "tomografia" }).success).toBe(false);
   });
   it("valida confianza entre 0 y 1", () => {
-    expect(
-      extractionResultSchema.safeParse({ tipo_documento: "factura", confianza: 1.2 }).success,
-    ).toBe(false);
+    expect(extractionResultSchema.safeParse({ doc_type: "factura", confianza: 1.2 }).success).toBe(
+      false,
+    );
   });
   it("tiene los 5 tipos de documento", () => {
     expect([...DOCUMENT_TYPES]).toEqual([
