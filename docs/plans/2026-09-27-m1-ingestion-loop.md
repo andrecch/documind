@@ -112,11 +112,11 @@ apps/web/e2e/ingesta.spec.ts              (flujo completo mockeado)
 
 **Files:** `apps/api/*` (main, config, módulos base), `src/database/{schema.ts,migrations}`, seeds, health, error filter uniforme
 
-- [ ] **S1:** Crear `apps/api` con NestJS 11 — Express default (compatibilidad con @nestjs/swagger y multer). Puerto **4000**. Prefijo global `/api/v1`. `ValidationPipe` global (whitelist + transform) + `@nestjs/swagger` en `/docs` + `class-validator` DTOs que re-disponen schemas de `@documind/shared` donde aplique.
-- [ ] **S2:** Drizzle: `src/database/schema.ts` (tablas del §Modelo de datos — pgvector via `drizzle-orm/pg-core` + `vector` importado de `drizzle-orm`). drizzle-kit `migrate` con `drizzle.config.ts` (dialect postgresql, DATABASE_URL al compose 5433) — script `pnpm --filter api db:migrate`. Seeds de `model_config` con los 3 modelos free.
-- [ ] **S3:** Env validation (zod): `DATABASE_URL`, `PORT=4000`, `OPENROUTER_API_KEY` opcional en M1. `.env.example` actualizado.
-- [ ] **S4:** Error filter uniforme: `{code, message, details}` con logging nest pino. `GET /health` responde `{status:'ok', db:'up', models: {vision, embedding, chat}}` (models leídos de seeds).
-- [ ] **S5:** Health con BD real conectada (compose up) manual check + commit `feat: nestjs api scaffold with drizzle migrations and model seeds`.
+- [x] **S1:** Crear `apps/api` con NestJS 11 — Express default (compatibilidad con @nestjs/swagger y multer). Puerto **4000**. Prefijo global `/api/v1`. `ValidationPipe` global (whitelist + transform) + `@nestjs/swagger` en `/docs` + `class-validator` DTOs que re-disponen schemas de `@documind/shared` donde aplique.
+- [x] **S2:** Drizzle: `src/database/schema.ts` (tablas del §Modelo de datos — pgvector via `drizzle-orm/pg-core` + `vector` importado de `drizzle-orm`). drizzle-kit `migrate` con `drizzle.config.ts` (dialect postgresql, DATABASE_URL al compose 5433) — script `pnpm --filter api db:migrate`. Seeds de `model_config` con los 3 modelos free.
+- [x] **S3:** Env validation (zod): `DATABASE_URL`, `PORT=4000`, `OPENROUTER_API_KEY` opcional en M1. `.env.example` actualizado.
+- [x] **S4:** Error filter uniforme: `{code, message, details}` con logging nest pino. `GET /health` responde `{status:'ok', db:'up', models: {vision, embedding, chat}}` (models leídos de seeds).
+- [x] **S5:** Health con BD real conectada (compose up) manual check + commit `feat: nestjs api scaffold with drizzle migrations and model seeds`.
 
 ### Task 3: Upload + storage + historial (M1.2)
 
