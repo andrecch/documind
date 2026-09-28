@@ -13,8 +13,7 @@
     "outDir": "dist",
     "baseUrl": ".",
     "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["src", "test"]
 }

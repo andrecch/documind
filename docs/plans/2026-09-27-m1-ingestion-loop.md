@@ -122,9 +122,9 @@ apps/web/e2e/ingesta.spec.ts              (flujo completo mockeado)
 
 **Files:** `src/documents/*` (controller, service, glob storage)
 
-- [ ] **S1:** `POST /documents` con multer (diskStorage a `uploads/{yyyy-mm}/{uuid}.{ext}`): valida mime real (pdf/png/jpg/webp), límites 20 MB, page_count del pdf se calcula después (lazy). Zod valida multipart fields. → `201 {id, filename, status:'pending'}` + row en DB.
-- [ ] **S2:** `GET /documents/:id/file` (stream con `Content-Type` + `Content-Disposition: inline` + soporte de `Range` para PDF preview). `GET /documents` con filtros básicos (status, docType, fecha) + paginación cursor por id.
-- [ ] **S3:** Supertest suite de documents (upload válidos/inválidos, file stream, paginación) contra BD de test (compose). commit `feat: document upload with disk storage, preview stream and listing`.
+- [x] **S1:** `POST /documents` con multer (diskStorage a `uploads/{yyyy-mm}/{uuid}.{ext}`): valida mime real (pdf/png/jpg/webp), límites 20 MB, page_count del pdf se calcula después (lazy). Zod valida multipart fields. → `201 {id, filename, status:'pending'}` + row en DB.
+- [x] **S2:** `GET /documents/:id/file` (stream con `Content-Type` + `Content-Disposition: inline` + soporte de `Range` para PDF preview). `GET /documents` con filtros básicos (status, docType, fecha) + paginación cursor por id.
+- [x] **S3:** Supertest suite de documents (upload válidos/inválidos, file stream, paginación) contra BD de test (compose). commit `feat: document upload with disk storage, preview stream and listing`.
 
 ### Task 4: Pipeline OCR (M1.3)
 
