@@ -6,6 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Upload } from "lucide-react";
 import { ACCEPTED_MIME_TYPES, MAX_FILE_SIZE_BYTES, validateFile } from "@documind/shared";
+import { api, ApiError } from "@/lib/api";
+import { errorText } from "@/lib/error-text";
 import { useActiveDoc } from "@/lib/store";
 
 const MAX_MB = Math.round(MAX_FILE_SIZE_BYTES / (1024 * 1024));
@@ -15,13 +17,15 @@ const ACCEPT = Object.fromEntries(ACCEPTED_MIME_TYPES.map((m) => [m, []]));
 /** Campo 1 del talonario: la hoja espera su original. */
 export function UploadDropzone() {
   const t = useTranslations("upload");
+  const te = useTranslations("errors");
   const locale = useLocale();
   const router = useRouter();
   const set = useActiveDoc((s) => s.set);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const onDrop = useCallback(
-    (files: File[], rejections: FileRejection[]) => {
+    async (files: File[], rejections: FileRejection[]) => {
       setError(null);
       const file = files[0];
       if (file) {
@@ -32,13 +36,16 @@ export function UploadDropzone() {
           );
           return;
         }
-        set({
-          name: file.name,
-          mime: file.type,
-          size: file.size,
-          objectUrl: URL.createObjectURL(file),
-        });
-        router.push(`/${locale}/review`);
+        setBusy(true);
+        try {
+          const doc = await api.uploadDocument(file);
+          set({ docId: doc.id, name: file.name, mime: doc.mime, size: file.size });
+          router.push(`/${locale}/review`);
+        } catch (reason) {
+          setError(errorText(te, reason instanceof ApiError ? reason.code : undefined));
+        } finally {
+          setBusy(false);
+        }
         return;
       }
       const rejection = rejections[0];
@@ -48,7 +55,7 @@ export function UploadDropzone() {
         codes.includes("file-too-large") ? t("tooLarge", { maxMb: MAX_MB }) : t("unsupported"),
       );
     },
-    [set, router, locale, t],
+    [set, router, locale, t, te],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -56,6 +63,7 @@ export function UploadDropzone() {
     accept: ACCEPT,
     multiple: false,
     noClick: false,
+    disabled: busy,
   });
 
   return (
@@ -74,11 +82,23 @@ export function UploadDropzone() {
           isDragActive ? "border-accent bg-accent-soft" : "border-rule/50"
         }`}
       >
-        <Upload size={34} strokeWidth={1.6} className="text-accent" />
-        <p className="font-mono text-[13.5px] font-bold tracking-[1.2px] text-text">
-          {t("dropTitle")}
-        </p>
-        <p className="font-mono text-[13px] text-text-2">{t("browse")}</p>
+        <Upload
+          size={34}
+          strokeWidth={1.6}
+          className={busy ? "animate-pulse text-rule" : "text-accent"}
+        />
+        {busy ? (
+          <p className="font-mono text-[13.5px] font-bold tracking-[1.2px] text-rule">
+            {t("uploading")}
+          </p>
+        ) : (
+          <>
+            <p className="font-mono text-[13.5px] font-bold tracking-[1.2px] text-text">
+              {t("dropTitle")}
+            </p>
+            <p className="font-mono text-[13px] text-text-2">{t("browse")}</p>
+          </>
+        )}
         <div className="mt-1 flex gap-2">
           {["JPG", "PNG", "WEBP", "PDF"].map((f) => (
             <span

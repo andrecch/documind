@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Navbar } from "@/components/navbar";
+import { HistoryList } from "@/components/history-list";
 import { SheetIllustration } from "@/components/sheet-illustration";
 import { UploadDropzone } from "@/components/upload-dropzone";
 
@@ -28,13 +29,14 @@ export default async function UploadPage({ params }: Props) {
           </div>
           <SheetIllustration className="hidden h-[100px] shrink-0 md:block" />
         </header>
-        <div className="flex flex-1 flex-col items-center justify-center py-12">
+        <div className="flex flex-1 flex-col justify-center py-12">
           <div className="w-full">
             <UploadDropzone />
           </div>
-          <p className="mt-6 max-w-[720px] text-center font-display text-[13.5px] text-text-2">
+          <p className="mx-auto mt-6 max-w-[720px] text-center font-display text-[13.5px] text-text-2">
             {t("upload.caption")}
           </p>
+          <HistoryList />
         </div>
       </div>
     </main>

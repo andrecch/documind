@@ -23,6 +23,18 @@ export const extractionResultSchema = z.object({
   impuestos: z.number().optional(),
   total: z.number().optional(),
   items_total: z.number().optional(),
+  objeto: z.string().optional(),
+  partes: z.string().optional(),
+  fecha_inicio: z.string().optional(),
+  fecha_fin: z.string().optional(),
+  valor: z.number().optional(),
+  alcance: z.string().optional(),
+  entidad: z.string().optional(),
+  vigencia: z.string().optional(),
+  entidades: z.string().optional(),
+  referencia: z.string().optional(),
+  asunto: z.string().optional(),
+  contenido: z.string().optional(),
   items: z
     .array(z.record(z.string(), z.union([z.string(), z.number(), z.null()])))
     .max(100)

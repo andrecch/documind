@@ -6,9 +6,10 @@ Web app RAG de documentos: subir imagen/PDF → OCR con LLM de visión (OpenRout
 
 ## Estado actual (2026-10-01)
 
-- **Plan activo**: `docs/plans/2026-09-27-m1-ingestion-loop.md` — leerlo PRIMERO. Tasks 1–4 completadas (contratos shared, scaffold NestJS+Drizzle, upload/listing, pipeline OCR con semáforo + adapter OpenRouter fetch + FakeProvider). Pendientes: Task 5 (ficha editable) → 6 (gate+embeddings) → 7 (cierre).
-- Contrato `VisionInput` ampliado en shared: `{ images: {imageBase64, mimeType}[] }` (OCR de N páginas en una pasada). El system prompt de extracción se construye desde `DOC_TYPE_TABLE_SCHEMA` (`apps/api/src/extractions/llm-schema.ts`).
-- OJO Task 5: los campos raíz por doc_type (contrato/propuesta/documentación) mencionados en el plan aún NO existen en `extractionResultSchema` — ampliar shared ahí, junto con la ficha.
+- **Plan activo**: `docs/plans/2026-09-27-m1-ingestion-loop.md` — leerlo PRIMERO. Tasks 1–5 completadas (contratos shared, scaffold NestJS+Drizzle, upload/listing, pipeline OCR con semáforo + adapter OpenRouter fetch + FakeProvider, ficha editable web + PATCH draft con field_audit servidor). Pendientes: Task 6 (gate+embeddings) → 7 (cierre).
+- Task 5 añadió: PATCH `/documents/:id/extraction` (409 `EXTRACTION_CONFIRMED` en confirmed — edición de archivados es Task 6), proxy rewrite Next `/api/*`, `lib/api.ts` web, historial mínimo en home, campos raíz por doc_type en `extractionResultSchema` (objeto/partes/fechas/valor · alcance/entidad/vigencia/valor · entidades/referencia/asunto/contenido).
+- OJO Task 6: el e2e «confirmar → ARCHIVADO en historial» prometido en Task 5 S6 se mueve al e2e de Task 6 (el gate POST /confirm no existía).
+- OJO Task 6: `PATCH /documents/:id/extraction/confirmed` (re-embed transaccional + revisión `post_confirm_edit`) aún no existe; `items_total` y suma de filas ya tienen alerta en web.
 - Ejecutar con la skill local `executing-plans`, tarea por tarea, marcando checkboxes.
 - Commits: Conventional Commits en `main`; PREGUNTAR antes de cada commit.
 

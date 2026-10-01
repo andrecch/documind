@@ -1,10 +1,10 @@
 import { create } from "zustand";
 
 export type ActiveDoc = {
+  docId: string;
   name: string;
   mime: string;
   size: number;
-  objectUrl: string;
 };
 
 type ActiveDocState = {
@@ -15,11 +15,6 @@ type ActiveDocState = {
 
 export const useActiveDoc = create<ActiveDocState>((set) => ({
   doc: null,
-  // Revoca el blob anterior al reemplazarlo (máximo 1 objectUrl vivo por sesión)
-  set: (doc) =>
-    set((s) => {
-      if (s.doc) URL.revokeObjectURL(s.doc.objectUrl);
-      return { doc };
-    }),
+  set: (doc) => set({ doc }),
   clear: () => set({ doc: null }),
 }));

@@ -5,6 +5,14 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${process.env.API_PROXY_URL ?? "http://localhost:4000/api/v1"}/:path*`,
+      },
+    ];
+  },
   async headers() {
     return [
       {

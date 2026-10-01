@@ -1,5 +1,6 @@
-import { Controller, Get, HttpCode, Inject, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post } from "@nestjs/common";
 import {
+  ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
@@ -8,6 +9,7 @@ import {
   ApiProperty,
   ApiTags,
 } from "@nestjs/swagger";
+import { IsObject } from "class-validator";
 import {
   ExtractionService,
   type ExtractionDetail,
@@ -85,6 +87,27 @@ class NotFoundErrorDto {
   message!: string;
 }
 
+class PatchExtractionDto {
+  @ApiProperty({
+    type: "object",
+    additionalProperties: true,
+    description: "Ficha completa editada",
+  })
+  @IsObject()
+  data!: Record<string, unknown>;
+}
+
+class ValidationErrorDto {
+  @ApiProperty({ type: String })
+  code!: string;
+
+  @ApiProperty({ type: String })
+  message!: string;
+
+  @ApiProperty({ type: String, required: false })
+  details?: string;
+}
+
 class ConflictErrorDto {
   @ApiProperty({ type: String })
   code!: string;
@@ -121,6 +144,27 @@ export class ExtractionController {
   @ApiNotFoundResponse({ type: NotFoundErrorDto })
   async extraction(@Param("id") id: string): Promise<ExtractionDetailDto> {
     const res: ExtractionDetail = await this.service.getExtraction(id);
+    return this.toDetailDto(res);
+  }
+
+  @Patch(":id/extraction")
+  @ApiOperation({
+    summary:
+      "Guarda la ficha editada (draft): recalcula field_audit y registra revisión draft_edit",
+  })
+  @ApiOkResponse({ type: ExtractionDetailDto })
+  @ApiBadRequestResponse({ type: ValidationErrorDto })
+  @ApiNotFoundResponse({ type: NotFoundErrorDto })
+  @ApiConflictResponse({ type: ConflictErrorDto })
+  async patch(
+    @Param("id") id: string,
+    @Body() body: PatchExtractionDto,
+  ): Promise<ExtractionDetailDto> {
+    const res: ExtractionDetail = await this.service.patchExtraction(id, body.data);
+    return this.toDetailDto(res);
+  }
+
+  private toDetailDto(res: ExtractionDetail): ExtractionDetailDto {
     return {
       extractionId: res.extractionId,
       documentId: res.documentId,

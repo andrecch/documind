@@ -163,6 +163,120 @@ describe("pipeline OCR (FakeProvider)", () => {
   });
 });
 
+describe("PATCH /documents/:id/extraction (ficha editable)", () => {
+  async function freshDraft(): Promise<{ docId: string; extraction: Record<string, unknown> }> {
+    const upload = await uploadPdf(app.getHttpServer());
+    const extract = await request(app.getHttpServer())
+      .post(`/api/v1/documents/${upload.body.id}/extract`)
+      .send();
+    expect(extract.status).toBe(201);
+    return { docId: upload.body.id, extraction: extract.body.llmData };
+  }
+
+  it("guarda la edición, recalcula field_audit y registra revisión draft_edit", async () => {
+    const { docId, extraction } = await freshDraft();
+    const edited = {
+      ...extraction,
+      numero: "FAC-EDITADA-001",
+      items: [
+        { ...(extraction.items as Record<string, unknown>[])[0], cantidad: 7 },
+        { ...(extraction.items as Record<string, unknown>[])[1], cantidad: 12 },
+      ],
+    };
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${docId}/extraction`)
+      .send({ data: edited });
+    expect(res.status).toBe(200);
+    expect(res.body.extraction.numero).toBe("FAC-EDITADA-001");
+    expect(res.body.fieldAudit.numero).toEqual({
+      llm: "FAC-2026-0847",
+      human: "FAC-EDITADA-001",
+    });
+    expect(res.body.fieldAudit["items.0.cantidad"]).toEqual({ llm: 1, human: 7 });
+    expect(res.body.fieldAudit["items.1.cantidad"]).toBeUndefined();
+
+    const revisions = await pool.query(
+      `SELECT r.action, r.actor FROM extraction_revisions r
+        JOIN extractions e ON e.id = r.extraction_id WHERE e.document_id = $1 ORDER BY r.created_at`,
+      [docId],
+    );
+    const actions = revisions.rows.map((r: { action: string }) => r.action);
+    expect(actions.filter((a: string) => a === "created")).toHaveLength(1);
+    expect(actions.filter((a: string) => a === "draft_edit")).toHaveLength(1);
+    const draftEdit = revisions.rows.find((r: { action: string }) => r.action === "draft_edit") as {
+      actor: string;
+    };
+    expect(draftEdit.actor).toBe("humano");
+  });
+
+  it("sin cambios reales no inserta revisión nueva", async () => {
+    const { docId, extraction } = await freshDraft();
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${docId}/extraction`)
+      .send({ data: extraction });
+    expect(res.status).toBe(200);
+    const count = await pool.query(
+      "SELECT count(*)::int AS n FROM extraction_revisions r JOIN extractions e ON e.id = r.extraction_id WHERE e.document_id = $1",
+      [docId],
+    );
+    expect(count.rows[0].n).toBe(1);
+  });
+
+  it("al cambiar a contrato limpia las claves de items fuera de schema", async () => {
+    const { docId, extraction } = await freshDraft();
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${docId}/extraction`)
+      .send({
+        data: {
+          ...extraction,
+          doc_type: "contrato",
+          objeto: "Arrendamiento",
+          partes: "A y B",
+          valor: 36000000,
+          items: [{ descripcion: "x", cantidad: 1, valor_unitario: 1, valor_total: 1 }],
+        },
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.docType).toBe("contrato");
+    expect(res.body.extraction.items).toBeUndefined();
+    expect(res.body.extraction.objeto).toBe("Arrendamiento");
+  });
+
+  it("409 si la extracción está confirmada", async () => {
+    const { docId, extraction } = await freshDraft();
+    await pool.query("UPDATE extractions SET status = 'confirmed' WHERE document_id = $1", [docId]);
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${docId}/extraction`)
+      .send({ data: { ...extraction, numero: "X" } });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe("EXTRACTION_CONFIRMED");
+  });
+
+  it("400 si el payload no cumple el esquema", async () => {
+    const { docId } = await freshDraft();
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${docId}/extraction`)
+      .send({ data: { doc_type: "factura" } });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("404 sin extracción y 404 documento fantasma", async () => {
+    const upload = await uploadPdf(app.getHttpServer());
+    const noExtraction = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${upload.body.id}/extraction`)
+      .send({ data: {} });
+    expect(noExtraction.status).toBe(404);
+    expect(noExtraction.body.code).toBe("EXTRACTION_NOT_FOUND");
+
+    const ghost = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${randomUUID()}/extraction`)
+      .send({ data: {} });
+    expect(ghost.status).toBe(404);
+    expect(ghost.body.code).toBe("DOCUMENT_NOT_FOUND");
+  });
+});
+
 describe("backoff del OpenRouterProvider", () => {
   it("reintenta ante 429 y resuelve con tokens de usage", async () => {
     let hits = 0;

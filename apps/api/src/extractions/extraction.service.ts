@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import {
   BadGatewayException,
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -8,8 +9,8 @@ import {
   UnprocessableEntityException,
 } from "@nestjs/common";
 import { desc, eq } from "drizzle-orm";
-import type { ExtractionResult, LLMProvider } from "@documind/shared";
-import { validateExtraction } from "@documind/shared";
+import type { ExtractionResult, FieldAudit, LLMProvider } from "@documind/shared";
+import { diffFields, validateExtraction } from "@documind/shared";
 import { DRIZZLE_DB } from "../database/database.module";
 import { dbSchema, type DrizzleDB } from "../database/drizzle";
 import { DocumentsService } from "../documents/documents.service";
@@ -44,6 +45,19 @@ export class ExtractionErrors {
     return new NotFoundException({
       code: "EXTRACTION_NOT_FOUND",
       message: "Este documento aún no tiene extracciones",
+    });
+  }
+  static confirmedLocked(): ConflictException {
+    return new ConflictException({
+      code: "EXTRACTION_CONFIRMED",
+      message: "La extracción está confirmada; use la edición de archivados",
+    });
+  }
+  static validation(error: unknown): BadRequestException {
+    return new BadRequestException({
+      code: "VALIDATION_ERROR",
+      message: "Los datos editados no cumplen el esquema de extracción",
+      details: error instanceof Error ? error.message : String(error),
     });
   }
   static inProgress(): ConflictException {
@@ -118,14 +132,63 @@ export class ExtractionService {
 
   async getExtraction(documentId: string): Promise<ExtractionDetail> {
     await this.documents.getOrFail(documentId);
+    const row = await this.latestExtraction(documentId);
+    if (!row) throw ExtractionErrors.notExtracted();
+    return this.toDetail(row);
+  }
+
+  async patchExtraction(documentId: string, data: unknown): Promise<ExtractionDetail> {
+    await this.documents.getOrFail(documentId);
+    const row = await this.latestExtraction(documentId);
+    if (!row) throw ExtractionErrors.notExtracted();
+    if (row.status === "confirmed") throw ExtractionErrors.confirmedLocked();
+
+    let edited: ExtractionResult;
+    try {
+      edited = validateExtraction(data);
+    } catch (error) {
+      throw ExtractionErrors.validation(error);
+    }
+
+    const fieldAudit: FieldAudit = diffFields(row.llmData, edited);
+    const changed = Object.keys(fieldAudit).length > 0;
+    if (changed) {
+      await this.db.transaction(async (tx) => {
+        await tx
+          .update(dbSchema.extractions)
+          .set({
+            docType: edited.doc_type,
+            confidence: edited.confianza,
+            llmData: edited,
+            fieldAudit,
+            updatedAt: new Date(),
+          })
+          .where(eq(dbSchema.extractions.id, row.id));
+        await tx.insert(dbSchema.extractionRevisions).values({
+          extractionId: row.id,
+          action: "draft_edit",
+          actor: "humano",
+          llmData: row.llmData,
+          confirmedData: edited,
+          fieldAudit,
+        });
+      });
+    }
+    const refreshed = await this.latestExtraction(documentId);
+    return this.toDetail(refreshed ?? { ...row, llmData: edited, fieldAudit });
+  }
+
+  private async latestExtraction(documentId: string) {
     const rows = await this.db
       .select()
       .from(dbSchema.extractions)
       .where(eq(dbSchema.extractions.documentId, documentId))
       .orderBy(desc(dbSchema.extractions.createdAt))
       .limit(1);
-    const row = rows[0];
-    if (!row) throw ExtractionErrors.notExtracted();
+    return rows[0] ?? undefined;
+  }
+
+  private toDetail(row: typeof dbSchema.extractions.$inferSelect): ExtractionDetail {
     const confirmed = row.status === "confirmed";
     return {
       extractionId: row.id,
@@ -134,7 +197,7 @@ export class ExtractionService {
       docType: row.docType,
       confidence: row.confidence,
       extraction: confirmed ? row.confirmedData : row.llmData,
-      fieldAudit: confirmed ? row.fieldAudit : null,
+      fieldAudit: row.fieldAudit,
       tokens: {
         prompt: row.promptTokens ?? 0,
         completion: row.completionTokens ?? 0,

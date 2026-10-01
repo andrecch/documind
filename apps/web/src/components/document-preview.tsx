@@ -2,6 +2,7 @@
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Focus, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { api } from "@/lib/api";
 import type { ActiveDoc } from "@/lib/store";
 
 const MIN_ZOOM = 0.5;
@@ -58,7 +59,9 @@ function PdfPreview({
   }, [url, page, onPages]);
   if (error)
     return (
-      <div className="p-8 text-center font-mono text-[12px] text-accent">PDF no renderizable</div>
+      <div className="p-8 text-center font-mono text-[12px] text-accent">
+        {tLoading("previewError")}
+      </div>
     );
   return (
     <div className="relative">
@@ -72,7 +75,7 @@ function PdfPreview({
   );
 }
 
-/** Mitad izquierda (comp V2): visor del original — fit al panel, zoom ±25% y pan. */
+/** Mitad izquierda (comp V2): visor del original — servido por la API vía proxy. */
 export function DocumentPreview({ doc }: { doc: ActiveDoc }) {
   const t = useTranslations("review");
   const [page, setPage] = useState(1);
@@ -80,6 +83,7 @@ export function DocumentPreview({ doc }: { doc: ActiveDoc }) {
   const [zoom, setZoom] = useState(1);
   const [imgError, setImgError] = useState(false);
   const [imgReady, setImgReady] = useState(false);
+  const fileUrl = api.fileUrl(doc.docId);
 
   const zoomIn = () => setZoom((z) => Math.min(MAX_ZOOM, Math.round((z + ZOOM_STEP) * 100) / 100));
   const zoomOut = () => setZoom((z) => Math.max(MIN_ZOOM, Math.round((z - ZOOM_STEP) * 100) / 100));
@@ -155,18 +159,18 @@ export function DocumentPreview({ doc }: { doc: ActiveDoc }) {
         <div className="flex min-w-full justify-center py-4" style={{ width: `${zoom * 100}%` }}>
           <div className="w-full px-4">
             {doc.mime === "application/pdf" ? (
-              <PdfPreview url={doc.objectUrl} page={page} onPages={setPages} />
+              <PdfPreview url={fileUrl} page={page} onPages={setPages} />
             ) : (
               <div className="relative mx-auto max-w-[900px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 {imgError ? (
                   <div className="flex min-h-32 items-center justify-center border border-dashed border-rule-soft bg-sheet/80 font-mono text-[11px] tracking-[1.2px] text-accent">
-                    {t("empty")}
+                    {t("previewError")}
                   </div>
                 ) : (
                   <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={doc.objectUrl}
+                      src={fileUrl}
                       alt={doc.name}
                       onLoad={() => setImgReady(true)}
                       onError={() => setImgError(true)}
