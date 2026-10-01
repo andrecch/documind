@@ -4,9 +4,11 @@
 
 Web app RAG de documentos: subir imagen/PDF → OCR con LLM de visión (OpenRouter, tier free) → ficha editable confirmada por humano → embeddings → pgvector → búsqueda/chat con citas (M2). Ver `docs/PRD.md` (v2) y `docs/ARCHITECTURE.md` (v2).
 
-## Estado actual (2026-09-28)
+## Estado actual (2026-10-01)
 
-- **Plan activo**: `docs/plans/2026-09-27-m1-ingestion-loop.md` — leerlo PRIMERO. Tasks 1–3 completadas (contratos shared, scaffold NestJS+Drizzle, upload/listing). Pendientes: Task 4 (pipeline OCR) → 5 (ficha editable) → 6 (gate+embeddings) → 7 (cierre).
+- **Plan activo**: `docs/plans/2026-09-27-m1-ingestion-loop.md` — leerlo PRIMERO. Tasks 1–4 completadas (contratos shared, scaffold NestJS+Drizzle, upload/listing, pipeline OCR con semáforo + adapter OpenRouter fetch + FakeProvider). Pendientes: Task 5 (ficha editable) → 6 (gate+embeddings) → 7 (cierre).
+- Contrato `VisionInput` ampliado en shared: `{ images: {imageBase64, mimeType}[] }` (OCR de N páginas en una pasada). El system prompt de extracción se construye desde `DOC_TYPE_TABLE_SCHEMA` (`apps/api/src/extractions/llm-schema.ts`).
+- OJO Task 5: los campos raíz por doc_type (contrato/propuesta/documentación) mencionados en el plan aún NO existen en `extractionResultSchema` — ampliar shared ahí, junto con la ficha.
 - Ejecutar con la skill local `executing-plans`, tarea por tarea, marcando checkboxes.
 - Commits: Conventional Commits en `main`; PREGUNTAR antes de cada commit.
 
@@ -24,7 +26,7 @@ Web app RAG de documentos: subir imagen/PDF → OCR con LLM de visión (OpenRout
 3. API dev: `pnpm --filter @documind/api dev` · Verificación rápida: `curl http://localhost:4000/api/v1/health` → `{"status":"ok","db":"up",...}`
 4. Web dev: `pnpm --filter web dev` · e2e web: `pnpm --filter web e2e`
 5. Tests API: `pnpm --filter @documind/api test` (requieren la BD del compose; los e2e en `apps/api/test/*.e2e-spec.ts` arrancan el AppModule completo y hacen TRUNCATE de las tablas — borran datos de dev).
-6. Gates antes de commitear: `pnpm typecheck && pnpm lint && pnpm test && pnpm build` + `pnpm format:check` (Prettier con `endOfLine: auto`).
+6. Gates antes de commitear: `pnpm typecheck && pnpm lint && pnpm test && pnpm build` + `pnpm format:check` (Prettier con `endOfLine: auto`). En esta máquina (12 GB): correr como `pnpm exec turbo run typecheck lint test build --concurrency=1` con `$env:NODE_OPTIONS="--max-old-space-size=2048"` — en paralelo o sin tope de heap los workers OOM (crash nativo 0xC0000409 en `next build`).
 7. Git hooks versionados: en un clon fresco hacer `git config core.hooksPath .githooks` o el pre-commit no corre (BOM check + `prettier -c .`).
 
 ## Migraciones
@@ -52,4 +54,5 @@ Web app RAG de documentos: subir imagen/PDF → OCR con LLM de visión (OpenRout
 - `pnpm-workspace.yaml` tiene `allowBuilds` (`@scarf/scarf: false`; swc/esbuild/watcher sí compilan).
 - `@nestjs/testing` debe ir en v11 (v12 es incompatible con core 11).
 - Acentos/BOM: si un archivo se corrompe, reescribirlo y verificar con `node scripts/check-bom.mjs` (lo corre el pre-commit).
+- `pdf-to-img` v7 es ESM-only: importarlo SOLO con `await import("pdf-to-img")` dinámico (funciona en tsx/CJS por require(esm) de Node 22+).
 - e2e de web corre contra build de producción (puerto 3101, `reuseExistingServer`).

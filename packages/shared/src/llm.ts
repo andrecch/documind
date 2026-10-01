@@ -1,5 +1,6 @@
 export type ProviderModel = { id: string; label: string; free: boolean; contextLength?: number };
-export type VisionInput = { imageBase64: string; mimeType: string } | { pdfBase64: string };
+export type VisionImage = { imageBase64: string; mimeType: string };
+export type VisionInput = { images: VisionImage[] };
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 export type ChatStreamChunk = { contentDelta: string; reasoningDelta?: string };
 
