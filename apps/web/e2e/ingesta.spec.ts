@@ -71,3 +71,19 @@ test("la alerta de totales aparece cuando la suma de filas no cuadra", async ({ 
   await page.getByLabel(/FILA 1 · VALOR TOTAL/).fill("10");
   await expect(page.getByText(/La suma de las filas es/)).toBeVisible({ timeout: 5_000 });
 });
+
+test("CONFIRMAR Y ARCHIVAR sella la ficha y el historial muestra ARCHIVADA", async ({ page }) => {
+  const name = `confirm-${randomUUID()}.png`;
+  await uploadAndExtract(page, name);
+  await page.getByRole("button", { name: "CONFIRMAR Y ARCHIVAR" }).click();
+  await expect(page.getByText("ARCHIVADA", { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: "CONFIRMAR Y ARCHIVAR" })).toBeHidden();
+  await expect(page.getByLabel("NÚMERO / REFERENCIA")).toBeDisabled();
+  await expect(page.getByLabel(/FILA 1 · DESCRIPCIÓN/)).toBeDisabled();
+
+  await page.getByRole("button", { name: "Volver" }).click();
+  await expect(page.getByText("ARCHIVO — ÚLTIMOS DOCUMENTOS")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: new RegExp(name.replace(/[-.]/g, "[$&]")) }),
+  ).toContainText("ARCHIVADA");
+});

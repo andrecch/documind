@@ -18,6 +18,7 @@ import { Semaphore } from "../common/semaphore";
 import { PROVIDER, LlmProviderError } from "./provider";
 import { EXTRACTION_JSON_SCHEMA } from "./llm-schema";
 import { PdfRenderError, TooManyPagesError, renderPdf } from "./pdf-renderer";
+import { buildChunkRows, type ChunkDraft } from "./embed";
 
 export type ExtractResponse = {
   extractionId: string;
@@ -25,6 +26,12 @@ export type ExtractResponse = {
   confidence: number;
   llmData: ExtractionResult;
   tokens: { prompt: number; completion: number };
+};
+
+export type ConfirmResult = {
+  extractionId: string;
+  status: "confirmed";
+  chunksInserted: number;
 };
 
 export type ExtractionDetail = {
@@ -51,6 +58,12 @@ export class ExtractionErrors {
     return new ConflictException({
       code: "EXTRACTION_CONFIRMED",
       message: "La extracción está confirmada; use la edición de archivados",
+    });
+  }
+  static notConfirmed(): ConflictException {
+    return new ConflictException({
+      code: "EXTRACTION_NOT_CONFIRMED",
+      message: "La extracción sigue en borrador; confirme antes de editar el archivado",
     });
   }
   static validation(error: unknown): BadRequestException {
@@ -176,6 +189,138 @@ export class ExtractionService {
     }
     const refreshed = await this.latestExtraction(documentId);
     return this.toDetail(refreshed ?? { ...row, llmData: edited, fieldAudit });
+  }
+
+  async confirm(documentId: string): Promise<ConfirmResult> {
+    await this.documents.getOrFail(documentId);
+    const row = await this.latestExtraction(documentId);
+    if (!row) throw ExtractionErrors.notExtracted();
+    if (row.status === "confirmed") throw ExtractionErrors.confirmedLocked();
+
+    let data: ExtractionResult;
+    try {
+      data = validateExtraction(row.llmData);
+    } catch (error) {
+      throw ExtractionErrors.validation(error);
+    }
+
+    let chunks: ChunkDraft[];
+    try {
+      chunks = await buildChunkRows(this.provider, data);
+    } catch (error) {
+      throw ExtractionErrors.map(error);
+    }
+
+    const now = new Date();
+    await this.db.transaction(async (tx) => {
+      await tx
+        .update(dbSchema.extractions)
+        .set({
+          status: "confirmed",
+          docType: data.doc_type,
+          confidence: data.confianza,
+          llmData: data,
+          confirmedData: data,
+          confirmedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(dbSchema.extractions.id, row.id));
+      await tx.insert(dbSchema.extractionRevisions).values({
+        extractionId: row.id,
+        action: "confirmed",
+        actor: "humano",
+        llmData: row.llmData,
+        confirmedData: data,
+        fieldAudit: row.fieldAudit,
+      });
+      await tx
+        .delete(dbSchema.documentChunks)
+        .where(eq(dbSchema.documentChunks.documentId, documentId));
+      await tx.insert(dbSchema.documentChunks).values(
+        chunks.map((chunk) => ({
+          documentId,
+          extractionId: row.id,
+          kind: chunk.kind,
+          itemIndex: chunk.itemIndex,
+          content: chunk.content,
+          embedding: chunk.embedding,
+        })),
+      );
+      await tx
+        .update(dbSchema.documents)
+        .set({ status: "archivado", updatedAt: now })
+        .where(eq(dbSchema.documents.id, documentId));
+    });
+
+    return { extractionId: row.id, status: "confirmed", chunksInserted: chunks.length };
+  }
+
+  async patchConfirmed(documentId: string, data: unknown): Promise<ExtractionDetail> {
+    await this.documents.getOrFail(documentId);
+    const row = await this.latestExtraction(documentId);
+    if (!row) throw ExtractionErrors.notExtracted();
+    if (row.status !== "confirmed") throw ExtractionErrors.notConfirmed();
+
+    let edited: ExtractionResult;
+    try {
+      edited = validateExtraction(data);
+    } catch (error) {
+      throw ExtractionErrors.validation(error);
+    }
+
+    const fieldAudit: FieldAudit = diffFields(row.llmData, edited);
+    if (Object.keys(fieldAudit).length === 0) {
+      return this.toDetail(row);
+    }
+
+    let chunks: ChunkDraft[];
+    try {
+      chunks = await buildChunkRows(this.provider, edited);
+    } catch (error) {
+      throw ExtractionErrors.map(error);
+    }
+
+    const now = new Date();
+    await this.db.transaction(async (tx) => {
+      await tx
+        .update(dbSchema.extractions)
+        .set({
+          docType: edited.doc_type,
+          confidence: edited.confianza,
+          confirmedData: edited,
+          fieldAudit,
+          updatedAt: now,
+        })
+        .where(eq(dbSchema.extractions.id, row.id));
+      await tx.insert(dbSchema.extractionRevisions).values({
+        extractionId: row.id,
+        action: "post_confirm_edit",
+        actor: "humano",
+        llmData: row.llmData,
+        confirmedData: edited,
+        fieldAudit,
+      });
+      await tx
+        .delete(dbSchema.documentChunks)
+        .where(eq(dbSchema.documentChunks.documentId, documentId));
+      await tx.insert(dbSchema.documentChunks).values(
+        chunks.map((chunk) => ({
+          documentId,
+          extractionId: row.id,
+          kind: chunk.kind,
+          itemIndex: chunk.itemIndex,
+          content: chunk.content,
+          embedding: chunk.embedding,
+        })),
+      );
+      await tx
+        .update(dbSchema.documents)
+        .set({ updatedAt: now })
+        .where(eq(dbSchema.documents.id, documentId));
+    });
+
+    const refreshed = await this.latestExtraction(documentId);
+    return this.toDetail(refreshed ?? { ...row, confirmedData: edited, fieldAudit });
   }
 
   private async latestExtraction(documentId: string) {

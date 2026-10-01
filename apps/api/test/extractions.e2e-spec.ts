@@ -277,6 +277,185 @@ describe("PATCH /documents/:id/extraction (ficha editable)", () => {
   });
 });
 
+describe("gate confirmar + embeddings (Task 6)", () => {
+  async function confirmedDoc(): Promise<{
+    docId: string;
+    extractionId: string;
+    llmData: Record<string, unknown>;
+  }> {
+    const upload = await uploadPdf(app.getHttpServer());
+    const extract = await request(app.getHttpServer())
+      .post(`/api/v1/documents/${upload.body.id}/extract`)
+      .send();
+    const confirm = await request(app.getHttpServer())
+      .post(`/api/v1/documents/${upload.body.id}/confirm`)
+      .send();
+    expect(confirm.status).toBe(200);
+    return {
+      docId: upload.body.id,
+      extractionId: confirm.body.extractionId,
+      llmData: extract.body.llmData,
+    };
+  }
+
+  it("confirma: inserta padre+hijos, sella archivado y registra revisión confirmed", async () => {
+    const { docId, extractionId } = await confirmedDoc();
+
+    const chunks = await pool.query(
+      "SELECT kind, item_index, content, vector_dims(embedding) AS dims FROM document_chunks WHERE document_id = $1 ORDER BY kind, item_index NULLS FIRST",
+      [docId],
+    );
+    expect(chunks.rows).toHaveLength(3);
+    expect(chunks.rows[0]).toMatchObject({ kind: "document", item_index: null, dims: 2048 });
+    expect(chunks.rows[0].content).toContain("Factura FAC-2026-0847");
+    expect(chunks.rows[1]).toMatchObject({ kind: "item", item_index: 0, dims: 2048 });
+    expect(chunks.rows[1].content).toContain("Ítem 1 de factura");
+    expect(chunks.rows[2]).toMatchObject({ kind: "item", item_index: 1, dims: 2048 });
+
+    const state = await pool.query(
+      `SELECT e.status, e.confirmed_at IS NOT NULL AS confirmed_now, e.confirmed_data IS NOT NULL AS has_confirmed,
+              d.status AS doc_status
+         FROM extractions e JOIN documents d ON d.id = e.document_id WHERE e.id = $1`,
+      [extractionId],
+    );
+    expect(state.rows[0]).toMatchObject({
+      status: "confirmed",
+      confirmed_now: true,
+      has_confirmed: true,
+      doc_status: "archivado",
+    });
+
+    const revision = await pool.query(
+      "SELECT action, actor FROM extraction_revisions WHERE extraction_id = $1 AND action = 'confirmed'",
+      [extractionId],
+    );
+    expect(revision.rows).toEqual([{ action: "confirmed", actor: "humano" }]);
+
+    const detail = await request(app.getHttpServer()).get(`/api/v1/documents/${docId}/extraction`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.status).toBe("confirmed");
+    expect(detail.body.extraction.numero).toBe("FAC-2026-0847");
+  });
+
+  it("re-confirmar devuelve 409 sin duplicar chunks", async () => {
+    const { docId } = await confirmedDoc();
+    const again = await request(app.getHttpServer())
+      .post(`/api/v1/documents/${docId}/confirm`)
+      .send();
+    expect(again.status).toBe(409);
+    expect(again.body.code).toBe("EXTRACTION_CONFIRMED");
+    const count = await pool.query(
+      "SELECT count(*)::int AS n FROM document_chunks WHERE document_id = $1",
+      [docId],
+    );
+    expect(count.rows[0].n).toBe(3);
+  });
+
+  it("PATCH confirmed regenera embeddings y registra post_confirm_edit", async () => {
+    const { docId, llmData } = await confirmedDoc();
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${docId}/extraction/confirmed`)
+      .send({ data: { ...llmData, numero: "FAC-ARCHIVADA-01" } });
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("confirmed");
+    expect(res.body.extraction.numero).toBe("FAC-ARCHIVADA-01");
+    expect(res.body.fieldAudit.numero).toEqual({
+      llm: "FAC-2026-0847",
+      human: "FAC-ARCHIVADA-01",
+    });
+
+    const chunks = await pool.query(
+      "SELECT count(*)::int AS n, bool_and(content NOT LIKE '%FAC-2026-0847%') AS replaced FROM document_chunks WHERE document_id = $1",
+      [docId],
+    );
+    expect(chunks.rows[0].n).toBe(3);
+    expect(chunks.rows[0].replaced).toBe(true);
+
+    const audit = await pool.query(
+      `SELECT e.llm_data ->> 'numero' AS llm_numero, e.confirmed_data ->> 'numero' AS confirmed_numero
+         FROM extractions e JOIN documents d ON d.id = e.document_id WHERE d.id = $1`,
+      [docId],
+    );
+    expect(audit.rows[0]).toEqual({
+      llm_numero: "FAC-2026-0847",
+      confirmed_numero: "FAC-ARCHIVADA-01",
+    });
+
+    const revision = await pool.query(
+      `SELECT count(*)::int AS n FROM extraction_revisions r
+         JOIN extractions e ON e.id = r.extraction_id
+        WHERE e.document_id = $1 AND r.action = 'post_confirm_edit' AND r.actor = 'humano'`,
+      [docId],
+    );
+    expect(revision.rows[0].n).toBe(1);
+  });
+
+  it("PATCH confirmed sin cambios reales no re-embed ni revisa", async () => {
+    const { docId, llmData } = await confirmedDoc();
+    const before = await pool.query(
+      "SELECT max(r.created_at) AS newest FROM extraction_revisions r JOIN extractions e ON e.id = r.extraction_id WHERE e.document_id = $1",
+      [docId],
+    );
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${docId}/extraction/confirmed`)
+      .send({ data: llmData });
+    expect(res.status).toBe(200);
+    const after = await pool.query(
+      "SELECT max(r.created_at) AS newest FROM extraction_revisions r JOIN extractions e ON e.id = r.extraction_id WHERE e.document_id = $1",
+      [docId],
+    );
+    expect(String(after.rows[0].newest)).toBe(String(before.rows[0].newest));
+  });
+
+  it("409 si se intenta editar como archivado un borrador", async () => {
+    const upload = await uploadPdf(app.getHttpServer());
+    await request(app.getHttpServer()).post(`/api/v1/documents/${upload.body.id}/extract`).send();
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${upload.body.id}/extraction/confirmed`)
+      .send({ data: {} });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe("EXTRACTION_NOT_CONFIRMED");
+  });
+
+  it("404 al confirmar sin extracción y documento fantasma", async () => {
+    const upload = await uploadPdf(app.getHttpServer());
+    const noExtraction = await request(app.getHttpServer())
+      .post(`/api/v1/documents/${upload.body.id}/confirm`)
+      .send();
+    expect(noExtraction.status).toBe(404);
+    expect(noExtraction.body.code).toBe("EXTRACTION_NOT_FOUND");
+
+    const ghost = await request(app.getHttpServer())
+      .post(`/api/v1/documents/${randomUUID()}/confirm`)
+      .send();
+    expect(ghost.status).toBe(404);
+    expect(ghost.body.code).toBe("DOCUMENT_NOT_FOUND");
+  });
+
+  it("tipo sin tabla de ítems solo inserta el chunk padre", async () => {
+    const upload = await uploadPdf(app.getHttpServer());
+    const extract = await request(app.getHttpServer())
+      .post(`/api/v1/documents/${upload.body.id}/extract`)
+      .send();
+    await request(app.getHttpServer())
+      .patch(`/api/v1/documents/${upload.body.id}/extraction`)
+      .send({
+        data: {
+          ...extract.body.llmData,
+          doc_type: "contrato",
+          objeto: "Arrendamiento",
+          partes: "A y B",
+          items: undefined,
+        },
+      });
+    const confirm = await request(app.getHttpServer())
+      .post(`/api/v1/documents/${upload.body.id}/confirm`)
+      .send();
+    expect(confirm.status).toBe(200);
+    expect(confirm.body.chunksInserted).toBe(1);
+  });
+});
+
 describe("backoff del OpenRouterProvider", () => {
   it("reintenta ante 429 y resuelve con tokens de usage", async () => {
     let hits = 0;

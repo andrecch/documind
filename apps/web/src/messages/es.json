@@ -108,6 +108,8 @@
     "extractHint": "La IA de visión aún no ha leído este documento. Pulse extraer y la hoja se rellenará sola.",
     "extract": "EXTRAER DATOS",
     "extracting": "LA IA ESTÁ LEYENDO EL DOCUMENTO…",
-    "extractingHint": "Puede tardar un minuto. No cierre esta hoja."
+    "extractingHint": "Puede tardar un minuto. No cierre esta hoja.",
+    "confirm": "CONFIRMAR Y ARCHIVAR",
+    "confirming": "ARCHIVANDO…"
   }
 }

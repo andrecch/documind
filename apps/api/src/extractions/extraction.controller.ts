@@ -108,6 +108,17 @@ class ValidationErrorDto {
   details?: string;
 }
 
+class ConfirmResponseDto {
+  @ApiProperty({ type: String })
+  extractionId!: string;
+
+  @ApiProperty({ type: String, enum: ["confirmed"] })
+  status!: string;
+
+  @ApiProperty({ type: Number, description: "Chunks insertados (padre + un hijo por fila)" })
+  chunksInserted!: number;
+}
+
 class ConflictErrorDto {
   @ApiProperty({ type: String })
   code!: string;
@@ -161,6 +172,34 @@ export class ExtractionController {
     @Body() body: PatchExtractionDto,
   ): Promise<ExtractionDetailDto> {
     const res: ExtractionDetail = await this.service.patchExtraction(id, body.data);
+    return this.toDetailDto(res);
+  }
+
+  @Post(":id/confirm")
+  @HttpCode(200)
+  @ApiOperation({
+    summary: "Gate humano: confirmed_data final → textos naturales → embeddings → archivado",
+  })
+  @ApiOkResponse({ type: ConfirmResponseDto })
+  @ApiNotFoundResponse({ type: NotFoundErrorDto })
+  @ApiConflictResponse({ type: ConflictErrorDto })
+  async confirm(@Param("id") id: string): Promise<ConfirmResponseDto> {
+    return this.service.confirm(id);
+  }
+
+  @Patch(":id/extraction/confirmed")
+  @ApiOperation({
+    summary: "Edición de archivado: recalcula field_audit y re-inserta embeddings (delete+insert)",
+  })
+  @ApiOkResponse({ type: ExtractionDetailDto })
+  @ApiBadRequestResponse({ type: ValidationErrorDto })
+  @ApiNotFoundResponse({ type: NotFoundErrorDto })
+  @ApiConflictResponse({ type: ConflictErrorDto })
+  async patchConfirmed(
+    @Param("id") id: string,
+    @Body() body: PatchExtractionDto,
+  ): Promise<ExtractionDetailDto> {
+    const res: ExtractionDetail = await this.service.patchConfirmed(id, body.data);
     return this.toDetailDto(res);
   }
 

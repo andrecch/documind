@@ -154,10 +154,10 @@ apps/web/e2e/ingesta.spec.ts              (flujo completo mockeado)
 
 **Files:** `src/extractions/{embed.ts,natural-text.ts}` + PATCH confirmed
 
-- [ ] **S1:** `natural-text.ts`: generadores de texto natural por doc_type (documento padre) y por ítem (chunk hijo «Ítem 3: descripción…, cantidad…»).
-- [ ] **S2:** `POST /documents/:id/confirm`: valida llm_data/confirmed_data → genera textos → `provider.embed([docText, ...items, ...])` → inserta padre (kind=document) + hijos (kind=item, item_index) → status rchivado + confirmed_at. Transaccional. Estados y tokens guardados. Idempotente si se vuelve a confirmar (409).
-- [ ] **S3:** PATCH en confirmed → re-embed transaccional (delete+insert de chunks de ese documento) + revisión `post_confirm_edit` (actor humano).
-- [ ] **S4:** Tests con fake embed provider: los chunks insertados coinciden con nº de filas+1 y textos correctos; re-embed reemplaza los anteriores. commit `feat: confirm gate with parent-child embeddings and re-embed on archivado edit`.
+- [x] **S1:** `natural-text.ts`: generadores de texto natural por doc_type (documento padre) y por ítem (chunk hijo «Ítem 3: descripción…, cantidad…»).
+- [x] **S2:** `POST /documents/:id/confirm`: valida llm_data → genera textos naturales (`natural-text.ts`) → `provider.embed([docText, ...items])` → inserta padre (kind=document) + hijos (kind=item, item_index) en una transacción → extracción `confirmed` + `confirmed_at` + revisión `confirmed` (actor humano) + documento `archivado`. Idempotente: re-confirmar devuelve 409 `EXTRACTION_CONFIRMED` sin duplicar chunks. Transaccional.
+- [x] **S3:** `PATCH /documents/:id/extraction/confirmed` → re-embed transaccional (delete+insert de chunks del documento) + revisión `post_confirm_edit` (actor humano); `field_audit` recalculado como diff llm_data→edited; sin diff real no re-embed. El PATCH draft devuelve 409 `EXTRACTION_CONFIRMED` en confirmed (enrutado a la edición de archivados).
+- [x] **S4:** Tests con fake embed provider: los chunks insertados coinciden con nº de filas+1 y textos correctos (`vector_dims`=2048); re-embed reemplaza los anteriores; re-confirmar 409; sin diff no re-embed. Extra web: botón «CONFIRMAR Y ARCHIVAR» (hace flush del PATCH pendiente antes de confirmar) y e2e Playwright «confirmar → ARCHIVADA en review e historial» — cierre del tramo que se movió desde Task 5. Commit: `feat: confirm gate with parent-child embeddings and re-embed on archivado edit` (pendiente de aprobación).
 
 ### Task 7: Cierre M1 (M1.6)
 

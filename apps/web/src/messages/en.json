@@ -108,6 +108,8 @@
     "extractHint": "The vision LLM has not read this document yet. Hit extract and the sheet will fill itself.",
     "extract": "EXTRACT DATA",
     "extracting": "THE AI IS READING THE DOCUMENT…",
-    "extractingHint": "This can take a minute. Do not close this sheet."
+    "extractingHint": "This can take a minute. Do not close this sheet.",
+    "confirm": "CONFIRM AND ARCHIVE",
+    "confirming": "ARCHIVING…"
   }
 }

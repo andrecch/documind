@@ -43,6 +43,12 @@ export type ExtractionDetail = {
   updatedAt: string;
 };
 
+export type ConfirmResponse = {
+  extractionId: string;
+  status: "confirmed";
+  chunksInserted: number;
+};
+
 const BASE = "/api";
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
@@ -108,6 +114,10 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data }),
     });
+  },
+
+  confirmDocument(documentId: string): Promise<ConfirmResponse> {
+    return call<ConfirmResponse>(`/documents/${documentId}/confirm`, { method: "POST" });
   },
 
   fileUrl(documentId: string): string {

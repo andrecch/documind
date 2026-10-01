@@ -48,6 +48,14 @@ export default function ReviewPage() {
     };
   }, [docId]);
 
+  const refreshDetail = useCallback(() => {
+    if (!docId) return;
+    void api
+      .getExtraction(docId)
+      .then(setDetail)
+      .catch(() => setDetail(null));
+  }, [docId]);
+
   const runExtract = useCallback(async () => {
     if (!doc) return;
     setExtracting(true);
@@ -137,12 +145,13 @@ export default function ReviewPage() {
           </div>
         ) : (
           <FichaForm
-            key={detail.extractionId}
+            key={`${detail.extractionId}:${detail.status}`}
             docId={doc.docId}
             docName={doc.name}
             initial={detail.extraction}
             readOnly={detail.status === "confirmed"}
             tokens={detail.tokens}
+            onConfirmed={refreshDetail}
           />
         )}
       </div>

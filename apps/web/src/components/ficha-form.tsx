@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ExtractionResult } from "@documind/shared";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+import { errorText } from "@/lib/error-text";
 import {
   FICHA_FIELDS,
   fromExtraction,
@@ -64,18 +65,24 @@ export function FichaForm({
   initial,
   readOnly,
   tokens,
+  onConfirmed,
 }: {
   docId: string;
   docName: string;
   initial: ExtractionResult;
   readOnly: boolean;
   tokens: { prompt: number; completion: number };
+  onConfirmed: () => void;
 }) {
   const t = useTranslations("review");
+  const te = useTranslations("errors");
   const locale = useLocale();
   const [ficha, setFicha] = useState<EditableFicha>(() => fromExtraction(initial));
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pending = useRef<EditableFicha | null>(null);
 
   useEffect(
     () => () => {
@@ -90,21 +97,48 @@ export function FichaForm({
     return () => clearTimeout(fade);
   }, [saveState]);
 
+  const persist = useCallback(async () => {
+    const target = pending.current;
+    if (!target) return;
+    pending.current = null;
+    try {
+      await api.patchExtraction(docId, toExtraction(target, initial.confianza));
+      setSaveState("saved");
+    } catch {
+      setSaveState("error");
+    }
+  }, [docId, initial.confianza]);
+
   const update = useCallback(
     (next: EditableFicha) => {
       setFicha(next);
       if (readOnly) return;
+      pending.current = next;
       if (timer.current) clearTimeout(timer.current);
       setSaveState("saving");
       timer.current = setTimeout(() => {
-        void api
-          .patchExtraction(docId, toExtraction(next, initial.confianza))
-          .then(() => setSaveState("saved"))
-          .catch(() => setSaveState("error"));
+        void persist();
       }, 800);
     },
-    [docId, initial.confianza, readOnly],
+    [persist, readOnly],
   );
+
+  const handleConfirm = useCallback(async () => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    setConfirming(true);
+    setConfirmError(null);
+    try {
+      await persist();
+      await api.confirmDocument(docId);
+      onConfirmed();
+    } catch (error) {
+      setConfirmError(errorText(te, error instanceof ApiError ? error.code : undefined));
+      setConfirming(false);
+    }
+  }, [persist, docId, onConfirmed, te]);
 
   const num = (n: number) => new Intl.NumberFormat(locale).format(n);
   const mismatch = itemsTotalsMismatch(ficha);
@@ -189,6 +223,23 @@ export function FichaForm({
                   {num(initial.confianza)}
                 </span>
               </div>
+              {!readOnly && (
+                <div className="flex items-center justify-end gap-3 border-t border-rule pt-3">
+                  {confirmError && (
+                    <span role="alert" className="font-mono text-[11px] font-bold text-accent">
+                      {confirmError}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void handleConfirm()}
+                    disabled={confirming}
+                    className="rounded-[2px] border-2 border-accent px-4 py-2 font-display text-[11px] font-bold uppercase tracking-[1.4px] text-accent transition hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
+                  >
+                    {confirming ? t("confirming") : t("confirm")}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
