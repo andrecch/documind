@@ -1,6 +1,8 @@
-import "dotenv/config";
 import { eq } from "drizzle-orm";
+import { loadEnvFiles } from "../config/env";
 import { createDrizzle, createPool, dbSchema } from "./drizzle";
+
+loadEnvFiles();
 
 const url = process.env.DATABASE_URL ?? "postgres://documind:documind@localhost:5433/documind";
 

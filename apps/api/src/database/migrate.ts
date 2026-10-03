@@ -1,7 +1,9 @@
-import "dotenv/config";
 import path from "node:path";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { loadEnvFiles } from "../config/env";
 import { createDrizzle, createPool } from "./drizzle";
+
+loadEnvFiles();
 
 const url = process.env.DATABASE_URL ?? "postgres://documind:documind@localhost:5433/documind";
 

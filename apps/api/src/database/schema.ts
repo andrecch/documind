@@ -8,6 +8,7 @@ import {
   real,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   vector,
 } from "drizzle-orm/pg-core";
@@ -124,7 +125,10 @@ export const modelConfig = pgTable(
     isDefault: boolean("is_default").notNull().default(true),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("idx_model_config_purpose").on(table.purpose, table.isDefault)],
+  (table) => [
+    index("idx_model_config_purpose").on(table.purpose, table.isDefault),
+    uniqueIndex("uq_model_config_provider_purpose").on(table.provider, table.purpose),
+  ],
 );
 
 export const providerSettings = pgTable("provider_settings", {
