@@ -4,13 +4,14 @@
 
 Web app RAG de documentos: subir imagen/PDF → OCR con LLM de visión (OpenRouter, tier free) → ficha editable confirmada por humano → embeddings → pgvector → búsqueda/chat con citas (M2). Ver `docs/PRD.md` (v2) y `docs/ARCHITECTURE.md` (v2).
 
-## Estado actual (2026-10-01)
+## Estado actual (2026-10-03) — **M1 CERRADO** ✅
 
-- **Plan activo**: `docs/plans/2026-09-27-m1-ingestion-loop.md` — leerlo PRIMERO. Tasks 1–6 completadas (contratos shared, scaffold NestJS+Drizzle, upload/listing, pipeline OCR con semáforo + adapter OpenRouter fetch + FakeProvider, ficha editable web + PATCH draft con field_audit servidor, gate confirmar con embeddings padre+ítems + re-embed en edición de archivados). Pendiente: Task 7 (cierre M1).
-- Task 6 añadió: `POST /documents/:id/confirm` (transaccional: extracción confirmed + revisión `confirmed` + chunks padre/hijos 2048 + doc `archivado`; re-confirmar 409), `PATCH /documents/:id/extraction/confirmed` (re-embed delete+insert + `post_confirm_edit`; sin diff no re-embed), `natural-text.ts` + `embed.ts`, botón web «CONFIRMAR Y ARCHIVAR» (hace flush del PATCH pendiente) y e2e Playwright «confirmar → ARCHIVADA en historial» (cerró el tramo movido desde Task 5).
-- Web UI: `ficha-form`/`items-grid`/`doc-type-switcher`/`items-total-alert`/`history-list` + `lib/api.ts` (proxy `/api/*`→`:4000/api/v1`) + helpers `lib/ficha.ts`. La hoja carbón M0 (`extraction-sheet`, `json-highlight`) fue eliminada (decisión usuario).
+- **Plan**: `docs/plans/2026-09-27-m1-ingestion-loop.md` — Tasks 1–7 completadas. Loop real verificado end-to-end con OpenRouter (OCR 7.1 s/1 página · embeddings Nemotron reales 2048 dims · cosine ok). Siguiente milestone: **M2** (`/search`, `/chat` con citas, Configuración con key cifrada) — requiere plan nuevo con `writing-plans`.
+- Última sesión (Task 7): dotenv unificado (`main.ts` + `migrate`/`seed` leen `apps/api/.env` y luego el de la raíz del repo; las vars ya exportadas ganan), `apps/api/.env.example` y `apps/api/README.md` nuevos, migración 0001 (UNIQUE `model_config(provider,purpose)` + dedup — antes `db:seed` duplicaba filas), ARCHITECTURE.md v2.1 y PRD v2.1 alineados con lo construido.
+- API: pipeline OCR con semáforo(409) + cap 8 páginas(422) + backoff, PATCH draft con `field_audit` servidor, gate `POST /confirm` (chunks padre+hijos + `archivado`), `PATCH /extraction/confirmed` con re-embed, revisiones `created/draft_edit/confirmed/post_confirm_edit`.
+- Web UI: `ficha-form`/`items-grid`/`doc-type-switcher`/`items-total-alert`/`history-list` + `lib/api.ts` (proxy `/api/*`→`:4000/api/v1`) + helpers `lib/ficha.ts` + botón CONFIRMAR Y ARCHIVAR. La hoja carbón M0 (`extraction-sheet`, `json-highlight`) fue eliminada (decisión usuario).
 - Ejecutar con la skill local `executing-plans`, tarea por tarea, marcando checkboxes.
-- Commits: Conventional Commits en `main`; PREGUNTAR antes de cada commit.
+- Commits: Conventional Commits en `main`; PREGUNTAR antes de cada commit/push.
 
 ## Stack y puertos
 
@@ -34,9 +35,11 @@ Web app RAG de documentos: subir imagen/PDF → OCR con LLM de visión (OpenRout
 - Editar `apps/api/src/database/schema.ts` → `pnpm --filter @documind/api db:generate` → revisar el SQL generado en `src/database/migrations/` → `db:migrate`. `db:generate` es codegen (drizzle-kit); `db:migrate` aplica contra la BD del compose.
 - pgvector: **HNSW no admite >2000 dims** → el índice usa `halfvec(2048)` (migración 0000).
 
-## Variables (copiar .env.example → .env)
+## Variables
 
-`DATABASE_URL` · `PORT=4000` · `OPENROUTER_API_KEY` (M1: respaldo por env; cifrado en BD es M2) · `DOCUMIND_PROVIDER` · `DOCUMIND_MASTER_KEY` (AES-256-GCM, se genera con la receta del comentario en .env.example) · `DOCUMIND_FAKE_PROVIDERS=1` (providers fake: SAMPLE_EXTRACTION + embeddings determinísticos; NO gasta cuota y es obligatorio en CI/tests) · `UPLOAD_DIR` (default `uploads/` en la raíz del repo — datos runtime, fuera de git).
+La API carga `.env` automáticamente (en orden de prioridad: exports del shell → `apps/api/.env` → `.env` de la raíz del repo). Copiar `apps/api/.env.example` → `.env` donde se prefiera.
+
+`DATABASE_URL` (default compose :5433) · `PORT=4000` · `OPENROUTER_API_KEY` (modo real; M1 por env — cifrado en BD es M2; sin ella y sin flag fake, la API no arranca) · `DOCUMIND_FAKE_PROVIDERS=1` (providers fake: SAMPLE_EXTRACTION + embeddings determinísticos; NO gasta cuota; los tests de API lo fuerzan vía `vitest.config.ts` y es obligatorio en CI) · `UPLOAD_DIR` (default `uploads/` **relativo al cwd** — con pnpm filters queda en `apps/api/uploads`; datos runtime, fuera de git) · `DOCUMIND_MASTER_KEY` + `API_PROXY_URL` quedan para M2.
 
 ## Convenciones críticas del código (leer antes de tocar apps/api)
 

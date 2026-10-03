@@ -106,8 +106,7 @@ apps/web/e2e/ingesta.spec.ts              (flujo completo mockeado)
 - [x] **S2:** `extraction.ts` v2 — `extractionResultSchema` ampliada con `items` (array de records según schema) + `items_total` (string money en la raíz) — **el JSON schema derivado del Zod se pasa al LLM**. Estados: `documentStatus` (pending/processing/ready_for_review/archivado/error) y `extractionStatus` (draft/confirmed). Validador de llm_data que normaliza filas de items a strings.
 - [x] **S3:** `audit.ts` — `diffFields(llmData, confirmedData)` → `field_audit` (paths planos; deep diff para objetos anidados de items; item añadido/borrado genera entrada). Test unitario con 6+ casos (campo raíz, celda de items, ítem añadido, ítem borrado, sin cambios, tipos number/money).
 - [x] **S4:** `llm.ts` — ampliar `listModels(purpose: "vision" | "embedding" | "chat")`; añadir `embed(inputs: string[], opts?: {dimensions?: number})`; placeholder `chatStream` en el contrato con lanzamiento de "not implemented in M1" para que el tipo compile (implementación real en M2). Añadir cost/params para OpenRouter además de vision.
-- [ ] **S5:** Gates: `pnpm --filter shared test && pnpm typecheck & lint` en verde; commit
-      `feat: shared contract v2 with table schema, audit diff and provider updates`
+- [x] **S5:** Gates: `pnpm --filter shared test && pnpm typecheck & lint` en verde; commit hecho (`6a03cef`).
 
 ### Task 2: Scaffold API NestJS + Drizzle (M1.1)
 
@@ -163,10 +162,10 @@ apps/web/e2e/ingesta.spec.ts              (flujo completo mockeado)
 
 **Files:** README apps/api, ARCHITECTURE.md (añadir tabla extraction_revisions + decisiones proxy/semáforo/env-key), docs/PRD (actualizar estado de criterios de aceptación cubiertos por M1)
 
-- [ ] **S1:** README apps/api con instrucciones (compose up, migrate, seed, dev, test, DOCUMIND_FAKE_PROVIDERS).
-- [ ] **S2:** Actualizar ARCHITECTURE.md §4-6 con las decisiones cerradas 2026-09-27 (tabla revisions, proxy rewrite, semáforo, env key, DOC_TYPE_TABLE_SHAPE).
-- [ ] **S3:** Verificación manual end-to-end con OpenRouter real: subir PDF → OCR → editar → confirmar → consultar `document_chunks` con rows correctos en pgvector (scripts/verify-embeddings.ts con búsqueda de prueba usando embeddings fake… o consultas de conteo).
-- [ ] **S4:** Gates completos: typecheck + lint + test (shared, web, api) + build + e2e Playwright. commit `docs: close M1 with verify instructions and architecture updates`.
+- [x] **S1:** README `apps/api/README.md` con instrucciones (compose up, migrate, seed, dev, test, DOCUMIND_FAKE_PROVIDERS). Extra: dotenv unificado (la API lee `apps/api/.env` y el de la raíz — antes el runbook prometía algo que no existía) + `apps/api/.env.example` + fix UNIQUE `model_config` (mig 0001, el seed duplicaba filas).
+- [x] **S2:** Actualizar ARCHITECTURE.md v2.1 §1-12 con lo realmente construido: enum `archivado`, tabla `extraction_revisions` + `revision_action`, índice real **HNSW halfvec(2048)** (no IVFFlat), contrato `LLMProvider` de M1 (`VisionInput.images[]`, chatStream placeholder), pipeline con semáforo/cap/backoff/retry-corrección, proxy rewrite, key por env en M1 (cifrada M2), roadmap M1 ✅.
+- [x] **S3:** Verificación manual end-to-end con OpenRouter real (gasto de cuota aprobado por el usuario): upload factura → OCR 7.1 s (qwen3.8-27b:free, usó el campo nuevo `valor`) → PATCH humano con auditoría completa → `POST /confirm` con **embeddings reales Nemotron en 1 s** → `document_chunks` 3 rows × `vector_dims 2048`, self-cosine 1.0, padre↔hijo 0.19 → doc `archivado`, revisión `created→draft_edit→confirmed`. Consultas psql directas (suficiente — no se creó verify-embeddings.ts; el gate real queda cubierto por el suite e2e con fake provider + esta medición).
+- [x] **S4:** Gates completos en verde: turbo typecheck+lint+test+build (11/11, shared 36 · api 36 · web 8 tests) + `format:check` + BOM + e2e Playwright 6/6. Commits (uno de código y otro docs, con aprobación del usuario): `fix(api): load .env from api and repo root and unique model_config` + `docs: close M1 with README, architecture v2.1 and PRD status`. **M1 CERRADO.**
 
 ---
 

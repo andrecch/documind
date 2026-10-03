@@ -1,6 +1,6 @@
 # DocuMind — Documento de Requisitos de Producto (PRD)
 
-> Estado: **v2.0** · 2026-09-26 · Actualizado tras la sesión de alineación (grill-me): el producto es un **RAG de documentos validado por humano**. Supersede v1.
+> Estado: **v2.1** · 2026-10-03 · M1 cerrado: los criterios de aceptación llevan el estado real tras la verificación end-to-end con OpenRouter (v2.0 · 2026-09-26 · sesión de alineación grill-me: el producto es un **RAG de documentos validado por humano**).
 
 ## 1. Visión
 
@@ -25,12 +25,12 @@ Los documentos administrativos (facturas, contratos, recibos, documentación, pr
 
 ## 4. Alcance por fases
 
-| Fase                     | Contenido                                                                                                                                                   | Estado      |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| **UI inicial (M0)**      | Monorepo + Docker (Postgres/pgvector) + mundo visual «Talonario» con Subir y Revisión (visor)                                                               | ✅ hecho    |
-| **M1 — Loop de ingesta** | Backend NestJS, upload real, OCR con LLM de visión, **formulario editable** (talonario), gate de confirmación, embeddings padre/hijo, persistencia completa | ← siguiente |
-| **M2 — Recuperación**    | `/search` semántica, **chat con citas**, pantalla de Configuración (API key cifrada, catálogo de modelos free)                                              | pendiente   |
-| **M3 — Archivo**         | Historial con filtros por tipo, re-embedding al editar, export, afinado                                                                                     | pendiente   |
+| Fase                     | Contenido                                                                                                                                                   | Estado                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **UI inicial (M0)**      | Monorepo + Docker (Postgres/pgvector) + mundo visual «Talonario» con Subir y Revisión (visor)                                                               | ✅ hecho              |
+| **M1 — Loop de ingesta** | Backend NestJS, upload real, OCR con LLM de visión, **formulario editable** (talonario), gate de confirmación, embeddings padre/hijo, persistencia completa | ✅ hecho (2026-10-03) |
+| **M2 — Recuperación**    | `/search` semántica, **chat con citas**, pantalla de Configuración (API key cifrada, catálogo de modelos free)                                              | pendiente             |
+| **M3 — Archivo**         | Historial con filtros por tipo, **re-edición de archivados en la web** (la API ya la soporta desde M1), export, afinado                                     | pendiente             |
 
 **Fuera de alcance:** OCR local, autenticación multiusuario, facturación, apps móviles nativas, S3 (disco local vía volumen Docker en el MVP).
 
@@ -44,36 +44,36 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 
 > Como usuario, quiero arrastrar una imagen o PDF — o hacer clic para explorar — para procesar un documento.
 
-- **AC1.1** Acepta `JPG`, `PNG`, `WEBP`, `PDF` ≤ **20 MB**; el dropzone es clickeable además de receptivo.
-- **AC1.2** Tipos no admitidos o exceso de tamaño muestran error claro en el idioma activo.
-- **AC1.3** PDFs multi-página se tratan como **un solo documento** (campos agregados de las N páginas); el preview paginado queda disponible.
+- **AC1.1** ✅ Acepta `JPG`, `PNG`, `WEBP`, `PDF` ≤ **20 MB**; el dropzone es clickeable además de receptivo.
+- **AC1.2** ✅ Tipos no admitidos o exceso de tamaño muestran error claro en el idioma activo.
+- **AC1.3** ✅ PDFs multi-página se tratan como **un solo documento** (campos agregados de las N páginas; máx 8 páginas por extracción); el preview paginado queda disponible.
 
 ### US2 · Formulario editable (corazón del producto)
 
 > Como usuario, quiero ver los datos que la IA reconoció como formulario con labels e inputs editables — corregirlos si se equivocó — y confirmar el documento para archivarlo en mi base.
 
-- **AC2.1** Split 50/50: original (imagen/PDF paginado) a la izquierda; formulario a la derecha con los campos reconocidos como **inputs editables** (texto, fecha, moneda, números), no como ficha de solo lectura.
-- **AC2.2** Todo editable: valores de campos, **ítems como grid de tabla editable** (columnas definidas por tipo de documento; documentos densos como una declaración DIAN de ~15 columnas × N filas son el caso real), añadir/eliminar filas, y el **tipo de documento** corregible si la IA clasificó mal.
-- **AC2.3** Validación en vivo con el esquema compartido (Zod); campos inválidos marcados sin bloquear la edición.
-- **AC2.4** El botón **«CONFIRMAR Y ARCHIVAR»** solo se activa con el documento válido; al confirmar pasa el estado a `confirmed`.
-- **AC2.5** **Auditoría por campo**: se persiste el valor reconocido (LLM) y el valor confirmado (humano), con diff por campo.
-- **AC2.6** Al confirmar: se genera el texto natural del documento + chunks hijos por ítem → embedding (2048 dims) → inserción en pgvector → estado `ARCHIVADO` (sello visible).
+- **AC2.1** ✅ Split 50/50: original (imagen/PDF paginado) a la izquierda; formulario a la derecha con los campos reconocidos como **inputs editables** (texto, fecha, moneda, números), no como ficha de solo lectura.
+- **AC2.2** ✅ Todo editable: valores de campos, **ítems como grid de tabla editable** (columnas definidas por tipo de documento; documentos densos como una declaración DIAN de ~15 columnas × N filas son el caso real), añadir/eliminar filas, y el **tipo de documento** corregible si la IA clasificó mal (el grid se re-renderiza con el schema del tipo elegido).
+- **AC2.3** ✅ Edición con autoguardado (debounce 800 ms) y validación con el esquema compartido (Zod) en el servidor; la discrepancia de totales se marca con alerta ámbar sin bloquear.
+- **AC2.4** ✅ El botón **«CONFIRMAR Y ARCHIVAR»** confirma con los datos editados (primero vuelca el autoguardado pendiente); al confirmar pasa el estado a `confirmed`.
+- **AC2.5** ✅ **Auditoría por campo**: el servidor recalcula `field_audit` (valor LLM vs humano, paths planos tipo `items.0.valor_total`) en cada edición; historial `extraction_revisions` por acción.
+- **AC2.6** ✅ Al confirmar: se genera el texto natural del documento + chunks hijos por ítem → embedding (2048 dims) → inserción en pgvector → estado `ARCHIVADO` (sello visible; verificado con embeddings reales de Nemotron).
 
 ### US3 · Re-editar un documento archivado
 
 > Como usuario, quiero reabrir un documento archivado, corregir algo y guardar, sabiendo que sus vectores se actualizan.
 
-- **AC3.1** Editable + **re-embed** en cada guardado (los chunks antiguos se reemplazan); la BD siempre refleja la verdad actual.
-- **AC3.2** Cada edición guarda nueva auditoría (historial de correcciones).
+- **AC3.1** ✅ (API; UI de re-edición en M3) Editable + **re-embed** en cada guardado vía `PATCH /extraction/confirmed` (los chunks antiguos se reemplazan transaccionalmente); la BD siempre refleja la verdad actual. La web muestra el archivado en solo lectura hasta M3.
+- **AC3.2** ✅ Cada edición guarda nueva auditoría (`field_audit` recalculado + revisión `post_confirm_edit` en el historial).
 
-### US4 · Búsqueda semántica
+### US4 · Búsqueda semántica (M2 — pendiente)
 
 > Como usuario, quiero buscar en mis documentos archivados por significado («la factura de la instalación eléctrica»).
 
 - **AC4.1** `/search` devuelve los documentos más relevantes con el fragmento fuente resaltado.
 - **AC4.2** Filtros por tipo de documento y fecha.
 
-### US5 · Chat con citas
+### US5 · Chat con citas (M2 — pendiente)
 
 > Como usuario, quiero preguntarle a DocuMind sobre mis documentos y recibir respuestas que citen la fuente.
 
@@ -81,17 +81,17 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 - **AC5.2** Cada dato de la respuesta lleva **cita clicable** a la ficha del documento fuente.
 - **AC5.3** Respuesta en streaming; modelo de chat `Qwen3.8 27B :free`.
 
-### US6 · Configuración
+### US6 · Configuración (M2 — pendiente)
 
 > Como usuario, quiero agregar mi API key de OpenRouter desde la UI y elegir los modelos de visión/embedding/chat.
 
 - **AC6.1** La clave se guarda **cifrada** (AES-256-GCM) en BD; la UI solo ve una máscara `••••4f2a`.
 - **AC6.2** El selector de modelos lista los modelos gratuitos vigentes del catálogo de OpenRouter; la elección se persiste en BD (nada hardcodeado).
 
-### US7 · Idioma · US8 · Tema
+### US7 · Idioma · US8 · Tema ✅ (M1)
 
-- **AC7.1** i18n `es` (default) / `en` en todo texto visible.
-- **AC8.1** Tema claro (base) / oscuro con toggle.
+- **AC7.1** ✅ i18n `es` (default) / `en` en todo texto visible (las etiquetas de columnas del grid viven en `DOC_TYPE_TABLE_SCHEMA` — en español; versionarlas a `en` se evaluará en M2).
+- **AC8.1** ✅ Tema claro (base) / oscuro con toggle.
 
 ## 7. Requisitos funcionales
 
@@ -109,11 +109,11 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 
 ## 8. Requisitos no funcionales
 
-- **RNF1 Estable** — extracción síncrona con estados visibles (pendiente → leyendo → listo/error), **reintentos con backoff** ante rate limits del tier free, cola simple en DB para extracciones concurrentes.
-- **RNF2 Rápida** — extracción < 10 s por página; búsqueda < 1 s local.
-- **RNF3 Eficiente** — solo modelos free; 1 embedding padre + N hijos por documento (2048 dims).
-- **RNF4 Privacidad** — los archivos permanecen en el servidor propio; solo se envían al LLM elegido.
-- **RNF5 Seguridad** — API key cifrada AES-256-GCM con clave maestra fuera de BD; nunca en logs ni frontend.
+- **RNF1 Estable** ✅ — extracción síncrona con estados visibles (pendiente → leyendo → listo/error), **reintentos con backoff + jitter** ante rate limits del tier free; concurrencia resuelta con **semáforo en memoria de 1 extracción** (decisión 13: uso personal; cola persistente en BD queda fuera de alcance M1).
+- **RNF2 Rápida** ✅ (ingesta) — extracción real medida 7.1 s en 1 página (< 10 s/página); confirmación con 3 embeddings en 1 s; búsqueda < 1 s local (M2).
+- **RNF3 Eficiente** ✅ — solo modelos free; 1 embedding padre + N hijos por documento (2048 dims verificadas contra Nemotron real).
+- **RNF4 Privacidad** ✅ — los archivos permanecen en disco local (`uploads/`); solo las páginas se envían al LLM elegido.
+- **RNF5 Seguridad** — **M1**: API key solo por entorno/`.env` (decisión 11); cifrado AES-256-GCM en BD con UI de Configuración en M2. Nunca en logs ni frontend.
 - **RNF6 Accesibilidad** — contraste AA, foco visible, teclado.
 - **RNF7 Calidad** — TypeScript strict; lint/typecheck/tests como gates.
 
