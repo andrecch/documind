@@ -1,16 +1,13 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule } from "../config/config.module";
 import { DatabaseModule } from "../database/database.module";
 import { DocumentsModule } from "../documents/documents.module";
-import { SettingsModule } from "../settings/settings.module";
+import { ProvidersModule } from "./providers.module";
 import { ExtractionController } from "./extraction.controller";
 import { ExtractionService } from "./extraction.service";
-import { providerFactory } from "./provider";
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, DocumentsModule, SettingsModule],
+  imports: [DatabaseModule, DocumentsModule, ProvidersModule],
   controllers: [ExtractionController],
-  providers: [ExtractionService, providerFactory],
-  exports: [providerFactory],
+  providers: [ExtractionService],
 })
 export class ExtractionsModule {}

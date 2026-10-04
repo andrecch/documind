@@ -10,6 +10,7 @@ import {
 import { API_ENV } from "../config/config.module";
 import type { ApiEnv } from "../config/env";
 import { SettingsService } from "../settings/settings.service";
+import { MasterKeyError, decryptSecret, requireMasterKey } from "../settings/crypto";
 import { buildCorrectionPrompt, buildExtractionSystemPrompt } from "./llm-schema";
 
 export const PROVIDER = "PROVIDER";
@@ -31,7 +32,8 @@ export class LlmProviderError extends Error {
 }
 
 export type OpenRouterConfig = {
-  apiKey: string;
+  apiKey?: string;
+  resolveApiKey?: () => string;
   visionModel: string;
   embeddingModel: string;
   chatModel: string;
@@ -102,6 +104,18 @@ export class OpenRouterProvider implements LLMProvider {
     this.timeoutMs = config.timeoutMs ?? 120_000;
   }
 
+  private endpointKey(): string {
+    if (this.config.resolveApiKey) return this.config.resolveApiKey();
+    const apiKey = this.config.apiKey;
+    if (!apiKey) {
+      throw new LlmProviderError(
+        "MASTER_KEY_MISSING",
+        "No hay API key configurada para OpenRouter",
+      );
+    }
+    return apiKey;
+  }
+
   async extractStructured(
     input: VisionInput,
     jsonSchema: object,
@@ -170,7 +184,7 @@ export class OpenRouterProvider implements LLMProvider {
 
   async *chatStream(messages: ChatMessage[]): AsyncGenerator<ChatStreamChunk> {
     const headers = {
-      Authorization: `Bearer ${this.config.apiKey}`,
+      Authorization: `Bearer ${this.endpointKey()}`,
       "Content-Type": "application/json",
       "HTTP-Referer": "http://localhost:3000",
       "X-Title": "DocuMind",
@@ -303,7 +317,7 @@ export class OpenRouterProvider implements LLMProvider {
         response = await fetch(`${this.baseUrl}${path}`, {
           method,
           headers: {
-            Authorization: `Bearer ${this.config.apiKey}`,
+            Authorization: `Bearer ${this.endpointKey()}`,
             "Content-Type": "application/json",
             "HTTP-Referer": "http://localhost:3000",
             "X-Title": "DocuMind",
@@ -428,12 +442,23 @@ export const providerFactory = {
   provide: PROVIDER,
   useFactory: async (env: ApiEnv, settings: SettingsService): Promise<LLMProvider> => {
     if (env.DOCUMIND_FAKE_PROVIDERS === "1") return new FakeProvider();
-    if (!env.OPENROUTER_API_KEY) {
-      throw new Error("OPENROUTER_API_KEY es obligatorio si DOCUMIND_FAKE_PROVIDERS no está a 1");
-    }
     const models = await settings.getDefaultModels();
     if (!models.vision || !models.embedding || !models.chat) {
       throw new Error("Faltan semillas de model_config para vision/embedding/chat");
+    }
+    const row = await settings.getDefaultProviderRow();
+    if (row) {
+      return new OpenRouterProvider({
+        resolveApiKey: () => resolveStoredKey(row.apiKeyCipher, env.DOCUMIND_MASTER_KEY),
+        visionModel: models.vision.modelId,
+        embeddingModel: models.embedding.modelId,
+        chatModel: models.chat.modelId,
+      });
+    }
+    if (!env.OPENROUTER_API_KEY) {
+      throw new Error(
+        "Sin provider_settings en BD ni OPENROUTER_API_KEY en env: no hay CLI de OpenRouter configurada",
+      );
     }
     return new OpenRouterProvider({
       apiKey: env.OPENROUTER_API_KEY,
@@ -444,3 +469,14 @@ export const providerFactory = {
   },
   inject: [API_ENV, SettingsService],
 };
+
+function resolveStoredKey(cipher: string, masterKey: string | undefined): string {
+  try {
+    return decryptSecret(cipher, requireMasterKey(masterKey));
+  } catch (error) {
+    if (error instanceof MasterKeyError) {
+      throw new LlmProviderError(error.code, error.message);
+    }
+    throw error;
+  }
+}

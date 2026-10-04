@@ -22,6 +22,8 @@ Se leen, en orden de prioridad: variables ya exportadas en el shell → `apps/ap
 | `1`  | FakeProvider: extracción `SAMPLE_EXTRACTION` + embeddings determinísticos (2048 dims). No toca la red ni la cuota. Tests ✓.                                                            |
 | otro | OpenRouter real vía `fetch` (`/chat/completions` con `response_format: json_schema`, `/embeddings`); requiere `OPENROUTER_API_KEY` en el entorno o en `.env`, si no la API no arranca. |
 
+**Prioridad de la API key (M2):** BD (`provider_settings`, cifrada AES-256-GCM con `DOCUMIND_MASTER_KEY`) → env (`OPENROUTER_API_KEY`) → error. La key se guarda por `PUT /settings/provider` y solo se lee en modo real; el fallo de clave maestra aparece al primer uso del provider (no al arrancar).
+
 ## Arranque
 
 ```powershell

@@ -7,6 +7,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().default(4000),
   OPENROUTER_API_KEY: z.string().optional(),
   DOCUMIND_FAKE_PROVIDERS: z.string().optional(),
+  DOCUMIND_MASTER_KEY: z.string().optional(),
   UPLOAD_DIR: z.string().default("uploads"),
 });
 

@@ -4,7 +4,8 @@ export type VisionInput = { images: VisionImage[] };
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 export type ChatStreamChunk = { contentDelta: string; reasoningDelta?: string };
 
-export type ModelPurpose = "vision" | "embedding" | "chat";
+export const MODEL_PURPOSES = ["vision", "embedding", "chat"] as const;
+export type ModelPurpose = (typeof MODEL_PURPOSES)[number];
 
 export interface LLMProvider {
   readonly id: string;
