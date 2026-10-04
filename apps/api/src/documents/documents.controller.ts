@@ -11,14 +11,14 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBody, ApiConsumes, ApiNotFoundResponse, ApiTags } from "@nestjs/swagger";
+import { ApiBody, ApiConsumes, ApiNotFoundResponse, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
 import { DocumentsService } from "./documents.service";
 import {
   DocumentNotFoundDto,
+  DocumentResponseDto,
   ListDocumentsQueryDto,
   ListDocumentsResponseDto,
-  type DocumentResponseDto,
 } from "./dto";
 import { MAX_FILE_BYTES } from "./mime";
 
@@ -43,6 +43,14 @@ export class DocumentsController {
   @Get()
   async list(@Query() query: ListDocumentsQueryDto): Promise<ListDocumentsResponseDto> {
     return this.documents.list(query);
+  }
+
+  @Get(":id")
+  @ApiOkResponse({ type: DocumentResponseDto })
+  @ApiNotFoundResponse({ type: DocumentNotFoundDto })
+  async get(@Param("id") id: string): Promise<DocumentResponseDto> {
+    const row = await this.documents.getOrFail(id);
+    return this.documents.toDto(row);
   }
 
   @Get(":id/file")

@@ -11,5 +11,6 @@ import { providerFactory } from "./provider";
   imports: [ConfigModule, DatabaseModule, DocumentsModule, SettingsModule],
   controllers: [ExtractionController],
   providers: [ExtractionService, providerFactory],
+  exports: [providerFactory],
 })
 export class ExtractionsModule {}
