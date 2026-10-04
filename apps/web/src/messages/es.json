@@ -26,6 +26,8 @@
     "DOCUMENT_NOT_FOUND": "El documento ya no existe.",
     "EXTRACTION_NOT_FOUND": "La hoja está en blanco: aún no hay datos extraídos.",
     "SEARCH_EMBED_ERROR": "No se pudo preparar la búsqueda (falló el modelo de embeddings). Inténtelo de nuevo.",
+    "MASTER_KEY_MISSING": "El servidor no tiene clave maestra configurada: no se puede cifrar la clave. Defina DOCUMIND_MASTER_KEY en la API y vuelva a guardar.",
+    "MASTER_KEY_INVALID": "La clave maestra del servidor no es válida. Regenere DOCUMIND_MASTER_KEY y vuelva a guardar la clave.",
     "EXTRACTION_CONFIRMED": "La ficha está archivada.",
     "unknown": "Algo salió mal. Inténtelo de nuevo."
   },
@@ -54,6 +56,24 @@
     "send": "ENVIAR",
     "writing": "ESCRIBIENDO…",
     "empty": "Aún no hay preguntas en esta hoja: pregunte algo de sus documentos archivados."
+  },
+  "settings": {
+    "title": "AJUSTES DEL TALONARIO",
+    "apiKey": {
+      "label": "CLAVE API DE OPENROUTER",
+      "placeholder": "sk-or-v1-… (mínimo 20 caracteres)",
+      "save": "GUARDAR CLAVE",
+      "current": "guardada: {hint}",
+      "saved": "GUARDADO"
+    },
+    "models": {
+      "vision": "Modelo de visión",
+      "embedding": "Modelo de embeddings",
+      "chat": "Modelo de chat",
+      "none": "Sin catálogo disponible",
+      "dimensions": "Dimensiones de embeddings",
+      "dimensionsHint": "2048"
+    }
   },
   "upload": {
     "tagline": "Sube un documento: la IA de visión lo lee, tú corriges y confirmas los campos, y quedan archivados en tu base — consultable por búsqueda y chat.",

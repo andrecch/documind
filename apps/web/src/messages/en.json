@@ -26,6 +26,8 @@
     "DOCUMENT_NOT_FOUND": "The document no longer exists.",
     "EXTRACTION_NOT_FOUND": "The sheet is blank: no extracted data yet.",
     "SEARCH_EMBED_ERROR": "Could not prepare the search (the embedding model failed). Please try again.",
+    "MASTER_KEY_MISSING": "The server has no master key configured: the key cannot be encrypted. Set DOCUMIND_MASTER_KEY on the API and save again.",
+    "MASTER_KEY_INVALID": "The server master key is invalid. Regenerate DOCUMIND_MASTER_KEY and save the key again.",
     "EXTRACTION_CONFIRMED": "The sheet is archived.",
     "unknown": "Something went wrong. Please try again."
   },
@@ -54,6 +56,24 @@
     "send": "SEND",
     "writing": "WRITING…",
     "empty": "No questions on this sheet yet: ask something about your archived documents."
+  },
+  "settings": {
+    "title": "LEDGER SETTINGS",
+    "apiKey": {
+      "label": "OPENROUTER API KEY",
+      "placeholder": "sk-or-v1-… (minimum 20 characters)",
+      "save": "SAVE KEY",
+      "current": "saved: {hint}",
+      "saved": "SAVED"
+    },
+    "models": {
+      "vision": "Vision model",
+      "embedding": "Embedding model",
+      "chat": "Chat model",
+      "none": "No catalog available",
+      "dimensions": "Embedding dimensions",
+      "dimensionsHint": "2048"
+    }
   },
   "upload": {
     "tagline": "Upload a document: the vision LLM reads it, you review and confirm its fields, and it joins your knowledge base — searchable by search and chat.",

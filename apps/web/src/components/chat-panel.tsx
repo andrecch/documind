@@ -11,7 +11,6 @@ import { useActiveDoc } from "@/lib/store";
 
 export function ChatPanel() {
   const t = useTranslations("chat");
-  const tt = useTranslations("review");
   const te = useTranslations("errors");
   const locale = useLocale();
   const router = useRouter();

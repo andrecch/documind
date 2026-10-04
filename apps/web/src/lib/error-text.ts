@@ -12,6 +12,8 @@ export const ERROR_CODES = [
   "EXTRACTION_NOT_FOUND",
   "EXTRACTION_CONFIRMED",
   "SEARCH_EMBED_ERROR",
+  "MASTER_KEY_MISSING",
+  "MASTER_KEY_INVALID",
   "unknown",
 ] as const;
 

@@ -5,6 +5,8 @@ import type {
   DocumentType,
   ExtractionResult,
   FieldAudit,
+  ModelPurpose,
+  ProviderModel,
   SseEvent,
   SearchRequest,
   SearchResponse,
@@ -58,6 +60,11 @@ export type ConfirmResponse = {
   extractionId: string;
   status: "confirmed";
   chunksInserted: number;
+};
+
+export type ModelsResponse = {
+  current: { modelId: string; dimensions: number | null } | null;
+  available: ProviderModel[];
 };
 
 const BASE = "/api";
@@ -133,6 +140,37 @@ export const api = {
 
   fileUrl(documentId: string): string {
     return `${BASE}/documents/${documentId}/file`;
+  },
+
+  getProvider(): Promise<{ hint: string | null }> {
+    return call<{ hint: string | null }>("/settings/provider");
+  },
+
+  saveProvider(apiKey: string): Promise<{ hint: string }> {
+    return call<{ hint: string }>("/settings/provider", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ apiKey }),
+    });
+  },
+
+  getModels(purpose: ModelPurpose): Promise<ModelsResponse> {
+    return call<ModelsResponse>(`/settings/models?purpose=${purpose}&free=true`);
+  },
+
+  saveModel(params: {
+    purpose: ModelPurpose;
+    modelId: string;
+    dimensions?: number | null;
+  }): Promise<{
+    modelId: string;
+    dimensions: number | null;
+  }> {
+    return call<{ modelId: string; dimensions: number | null }>("/settings/models", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
   },
 
   getDocument(documentId: string): Promise<DocumentSummary | null> {
