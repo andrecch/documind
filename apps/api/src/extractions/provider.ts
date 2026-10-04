@@ -168,8 +168,81 @@ export class OpenRouterProvider implements LLMProvider {
     return rows.map((row) => row.embedding);
   }
 
-  async *chatStream(_messages: ChatMessage[]): AsyncGenerator<ChatStreamChunk> {
-    throw new Error("chatStream no está implementado en M1");
+  async *chatStream(messages: ChatMessage[]): AsyncGenerator<ChatStreamChunk> {
+    const headers = {
+      Authorization: `Bearer ${this.config.apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "http://localhost:3000",
+      "X-Title": "DocuMind",
+    };
+    let response: Response | undefined;
+    let lastStatus = 0;
+    let lastDetail: unknown;
+    for (let attempt = 1; attempt <= this.maxAttempts; attempt += 1) {
+      if (attempt > 1) await sleep(this.backoffMs(attempt));
+      try {
+        response = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ model: this.config.chatModel, messages, stream: true }),
+        });
+      } catch (error) {
+        lastStatus = 0;
+        lastDetail = error instanceof Error ? `${error.name}: ${error.message}` : error;
+        continue;
+      }
+      if (response.ok) break;
+      lastStatus = response.status;
+      lastDetail = (await response.text().catch(() => "")).slice(0, 500);
+      if (!isRetryable(response.status)) {
+        throw new LlmProviderError(
+          "LLM_HTTP_ERROR",
+          `OpenRouter respondió ${response.status}`,
+          response.status,
+          lastDetail,
+        );
+      }
+      response = undefined;
+    }
+    if (!response || !response.ok) {
+      throw new LlmProviderError(
+        "LLM_UNAVAILABLE",
+        `OpenRouter no disponible tras ${this.maxAttempts} intentos (chat)`,
+        lastStatus || undefined,
+        lastDetail,
+      );
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value);
+      let lineBreak: number;
+      while ((lineBreak = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, lineBreak).replace(/\r$/, "");
+        buffer = buffer.slice(lineBreak + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (payload === "[DONE]") return;
+        try {
+          const event = JSON.parse(payload) as {
+            choices?: { delta?: { content?: string; reasoning?: string } }[];
+          };
+          const delta = event.choices?.[0]?.delta;
+          if (!delta) continue;
+          const chunk: ChatStreamChunk = { contentDelta: delta.content ?? "" };
+          if (typeof delta.reasoning === "string" && delta.reasoning.length > 0) {
+            chunk.reasoningDelta = delta.reasoning;
+          }
+          yield chunk;
+        } catch {
+          continue;
+        }
+      }
+    }
   }
 
   async listModels(purpose: ModelPurpose, opts?: { freeOnly?: boolean }): Promise<ProviderModel[]> {
@@ -325,13 +398,30 @@ export class FakeProvider implements LLMProvider {
     return inputs.map((text) => deterministicVector(text));
   }
 
-  async *chatStream(_messages: ChatMessage[]): AsyncGenerator<ChatStreamChunk> {
-    throw new Error("chatStream no está implementado en M1");
+  async *chatStream(messages: ChatMessage[]): AsyncGenerator<ChatStreamChunk> {
+    const lastUser = [...messages].reverse().find((message) => message.role === "user");
+    const contextoBlock =
+      /<contexto>\n([\s\S]*?)<\/contexto>/.exec(lastUser?.content ?? "")?.[1] ?? "";
+    const fragment = /^\[1\] ([^\n]*)/m.exec(contextoBlock)?.[1] ?? "";
+    const answer = fragment
+      ? `Según tus documentos: ${fragment.slice(0, 160)} [1].`
+      : "No lo encuentro en tus documentos.";
+    const pieces = splitDeltas(answer, 3);
+    for (const piece of pieces) yield { contentDelta: piece };
   }
 
   async listModels(purpose: ModelPurpose): Promise<ProviderModel[]> {
     return [{ id: `fake-${purpose}`, label: `Fake ${purpose}`, free: true }];
   }
+}
+
+function splitDeltas(text: string, count: number): string[] {
+  const size = Math.ceil(text.length / count);
+  const pieces: string[] = [];
+  for (let offset = 0; offset < text.length; offset += size) {
+    pieces.push(text.slice(offset, offset + size));
+  }
+  return pieces;
 }
 
 export const providerFactory = {
