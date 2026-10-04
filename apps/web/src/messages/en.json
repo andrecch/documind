@@ -47,6 +47,14 @@
     "relevance": "{percent}% MATCH",
     "filters": { "type": "TYPE", "from": "FROM", "to": "TO", "all": "ALL" }
   },
+  "chat": {
+    "title": "ASK YOUR ARCHIVE",
+    "placeholder": "Ask about your documents…",
+    "action": "Send question",
+    "send": "SEND",
+    "writing": "WRITING…",
+    "empty": "No questions on this sheet yet: ask something about your archived documents."
+  },
   "upload": {
     "tagline": "Upload a document: the vision LLM reads it, you review and confirm its fields, and it joins your knowledge base — searchable by search and chat.",
     "field1": "ATTACH YOUR DOCUMENT",

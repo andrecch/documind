@@ -47,6 +47,14 @@
     "relevance": "{percent}% ALINEADO",
     "filters": { "type": "TIPO", "from": "DESDE", "to": "HASTA", "all": "TODOS" }
   },
+  "chat": {
+    "title": "PREGÚNTELE A SU ARCHIVO",
+    "placeholder": "Pregunte por sus documentos…",
+    "action": "Enviar pregunta",
+    "send": "ENVIAR",
+    "writing": "ESCRIBIENDO…",
+    "empty": "Aún no hay preguntas en esta hoja: pregunte algo de sus documentos archivados."
+  },
   "upload": {
     "tagline": "Sube un documento: la IA de visión lo lee, tú corriges y confirmas los campos, y quedan archivados en tu base — consultable por búsqueda y chat.",
     "field1": "ADJUNTE SU DOCUMENTO",

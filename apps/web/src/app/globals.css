@@ -80,3 +80,19 @@ body {
   color: var(--text);
   font-family: var(--font-body), "Archivo Narrow", system-ui, sans-serif;
 }
+
+@keyframes stream-cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.stream-cursor {
+  animation: stream-cursor-blink 1s steps(1, start) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stream-cursor {
+    animation: none;
+  }
+}

@@ -1,11 +1,15 @@
 import type {
+  ChatRequest,
+  Citation,
   DocumentStatus,
   DocumentType,
   ExtractionResult,
   FieldAudit,
+  SseEvent,
   SearchRequest,
   SearchResponse,
 } from "@documind/shared";
+import { readSse } from "@/lib/sse";
 
 export class ApiError extends Error {
   constructor(
@@ -149,6 +153,72 @@ export const api = {
         to: params.to?.toISOString(),
         limit: params.limit,
       }),
+    });
+  },
+
+  async chat(
+    params: ChatRequest,
+    onDelta: (text: string) => void,
+  ): Promise<{ sessionId: string; messageId: string; citations: Citation[] }> {
+    const request: RequestInit = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    };
+    let response: Response;
+    try {
+      response = await fetch(`${BASE}/chat`, request);
+    } catch {
+      throw new ApiError("NETWORK", "", 0);
+    }
+    if (!response.ok) {
+      const text = await response.text();
+      let payload: { code?: string; message?: string } = {};
+      try {
+        payload = JSON.parse(text) as { code?: string; message?: string };
+      } catch {
+        payload = {};
+      }
+      throw new ApiError(
+        payload.code ?? `HTTP_${response.status}`,
+        payload.message ?? "",
+        response.status,
+      );
+    }
+
+    let streamError: { code: string; message: string } | null = null;
+    let answer: { sessionId: string; messageId: string; citations: Citation[] } | null = null;
+    return new Promise((resolve, reject) => {
+      void readSse<SseEvent>(
+        response,
+        (event) => {
+          if (event.type === "delta") {
+            onDelta(event.text);
+            return;
+          }
+          if (event.type === "citations") {
+            answer = {
+              sessionId: event.sessionId,
+              messageId: event.messageId,
+              citations: event.citations,
+            };
+            return;
+          }
+          streamError = { code: event.code, message: event.message };
+        },
+        (status) => {
+          const failed = streamError as { code: string; message: string } | null;
+          if (failed) {
+            reject(new ApiError(failed.code, failed.message, status));
+            return;
+          }
+          if (answer) {
+            resolve(answer as { sessionId: string; messageId: string; citations: Citation[] });
+            return;
+          }
+          reject(new ApiError("unknown", "", status));
+        },
+      );
     });
   },
 };
