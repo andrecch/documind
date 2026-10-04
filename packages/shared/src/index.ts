@@ -4,3 +4,5 @@ export * from "./extraction";
 export * from "./table-schema";
 export * from "./audit";
 export * from "./llm";
+export * from "./search";
+export * from "./chat";

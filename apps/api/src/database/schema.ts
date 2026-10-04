@@ -27,6 +27,7 @@ export const docTypeEnum = pgEnum("doc_type", [
 ]);
 export const chunkKindEnum = pgEnum("chunk_kind", ["document", "item"]);
 export const modelPurposeEnum = pgEnum("model_purpose", ["vision", "embedding", "chat"]);
+export const chatRoleEnum = pgEnum("chat_role", ["user", "assistant"]);
 
 export const documents = pgTable(
   "documents",
@@ -142,3 +143,18 @@ export const providerSettings = pgTable("provider_settings", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    sessionId: uuid("session_id").notNull(),
+    role: chatRoleEnum("role").notNull(),
+    content: text("content").notNull(),
+    citations: jsonb("citations"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("idx_chat_messages_session").on(table.sessionId, table.createdAt)],
+);

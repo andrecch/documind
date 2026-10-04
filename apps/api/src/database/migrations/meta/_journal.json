@@ -15,6 +15,13 @@
       "when": 1791002972987,
       "tag": "0001_outgoing_mercury",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791096072018,
+      "tag": "0002_awesome_steve_rogers",
+      "breakpoints": true
     }
   ]
 }
