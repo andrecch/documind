@@ -1,7 +1,7 @@
 "use client";
 import { useTranslations } from "next-intl";
-import { Settings } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
+import { NavLinks } from "./nav-links";
 
 export function Navbar({ left }: { left?: React.ReactNode }) {
   const t = useTranslations("nav");
@@ -15,14 +15,8 @@ export function Navbar({ left }: { left?: React.ReactNode }) {
         </span>
       </div>
       <div className="flex items-center gap-2.5">
+        <NavLinks />
         <ThemeToggle />
-        <button
-          type="button"
-          aria-label={t("settings")}
-          className="flex h-9 w-9 items-center justify-center rounded-[3px] border border-rule-soft text-text-2 transition hover:border-rule hover:text-rule"
-        >
-          <Settings size={16} strokeWidth={1.8} />
-        </button>
       </div>
     </header>
   );

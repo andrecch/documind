@@ -25,11 +25,28 @@
     "VALIDATION_ERROR": "Algunos valores no cumplen el formato esperado.",
     "DOCUMENT_NOT_FOUND": "El documento ya no existe.",
     "EXTRACTION_NOT_FOUND": "La hoja está en blanco: aún no hay datos extraídos.",
+    "SEARCH_EMBED_ERROR": "No se pudo preparar la búsqueda (falló el modelo de embeddings). Inténtelo de nuevo.",
     "EXTRACTION_CONFIRMED": "La ficha está archivada.",
     "unknown": "Algo salió mal. Inténtelo de nuevo."
   },
   "theme": { "toLight": "Cambiar a tema claro", "toDark": "Cambiar a tema oscuro" },
-  "nav": { "brand": "DOCUMIND", "settings": "Ajustes" },
+  "nav": {
+    "brand": "DOCUMIND",
+    "upload": "Subir",
+    "search": "Búsqueda",
+    "chat": "Chat",
+    "settings": "Ajustes"
+  },
+  "search": {
+    "title": "CONSULTA AL ARCHIVO",
+    "placeholder": "¿Qué busca en sus documentos? P. ej.: la factura de la instalación eléctrica",
+    "action": "BUSCAR",
+    "searching": "BUSCANDO EN EL ARCHIVO…",
+    "empty": "Sin resultados en el archivo.",
+    "results": "{count} resultado(s) · {took} ms",
+    "relevance": "{percent}% ALINEADO",
+    "filters": { "type": "TIPO", "from": "DESDE", "to": "HASTA", "all": "TODOS" }
+  },
   "upload": {
     "tagline": "Sube un documento: la IA de visión lo lee, tú corriges y confirmas los campos, y quedan archivados en tu base — consultable por búsqueda y chat.",
     "field1": "ADJUNTE SU DOCUMENTO",

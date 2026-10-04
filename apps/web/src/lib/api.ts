@@ -1,4 +1,11 @@
-import type { DocumentStatus, DocumentType, ExtractionResult, FieldAudit } from "@documind/shared";
+import type {
+  DocumentStatus,
+  DocumentType,
+  ExtractionResult,
+  FieldAudit,
+  SearchRequest,
+  SearchResponse,
+} from "@documind/shared";
 
 export class ApiError extends Error {
   constructor(
@@ -122,5 +129,26 @@ export const api = {
 
   fileUrl(documentId: string): string {
     return `${BASE}/documents/${documentId}/file`;
+  },
+
+  getDocument(documentId: string): Promise<DocumentSummary | null> {
+    return call<DocumentSummary>(`/documents/${documentId}`).catch((error) => {
+      if (error instanceof ApiError && error.code === "DOCUMENT_NOT_FOUND") return null;
+      throw error;
+    });
+  },
+
+  searchDocs(params: SearchRequest): Promise<SearchResponse> {
+    return call<SearchResponse>("/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: params.query,
+        docType: params.docType,
+        from: params.from?.toISOString(),
+        to: params.to?.toISOString(),
+        limit: params.limit,
+      }),
+    });
   },
 };

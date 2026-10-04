@@ -11,6 +11,7 @@ export const ERROR_CODES = [
   "DOCUMENT_NOT_FOUND",
   "EXTRACTION_NOT_FOUND",
   "EXTRACTION_CONFIRMED",
+  "SEARCH_EMBED_ERROR",
   "unknown",
 ] as const;
 
