@@ -42,6 +42,9 @@ export class ListDocumentsQueryDto {
   @ApiPropertyOptional({ type: String, example: "2026-12-31" })
   createdTo?: string;
 
+  @ApiPropertyOptional({ type: String, maxLength: 120 })
+  q?: string;
+
   @ApiPropertyOptional({ type: Number, default: 20, maximum: 100 })
   limit?: number;
 

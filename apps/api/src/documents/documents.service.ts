@@ -76,6 +76,7 @@ export class DocumentsService {
     docType?: DocumentType;
     createdFrom?: string;
     createdTo?: string;
+    q?: string;
     limit?: number;
     offset?: number;
   }): Promise<{ items: DocumentResponseDto[]; total: number }> {
@@ -89,6 +90,10 @@ export class DocumentsService {
       conditions.push(
         sql`EXISTS (SELECT 1 FROM ${dbSchema.extractions} WHERE ${dbSchema.extractions.documentId} = ${dbSchema.documents.id} AND ${dbSchema.extractions.docType} = ${filters.docType})`,
       );
+    }
+    if (filters.q) {
+      const needle = `%${filters.q.replaceAll("%", "").replaceAll("_", "")}%`;
+      conditions.push(sql`${dbSchema.documents.filename} ILIKE ${needle}`);
     }
 
     const limit = Math.min(filters.limit ?? 20, 100);

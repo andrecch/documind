@@ -91,4 +91,34 @@ describe("documents endpoints", () => {
     expect(res.status).toBe(200);
     expect(res.body.items.every((d: { status: string }) => d.status === "archivado")).toBe(true);
   });
+
+  it("filtra por q sobre el filename (M3.0)", async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const up1 = await request(app.getHttpServer())
+      .post("/api/v1/documents")
+      .attach("file", PNG_1PX, `qfiltro-${suffix}-alfa.png`);
+    expect(up1.status).toBe(201);
+    const up2 = await request(app.getHttpServer())
+      .post("/api/v1/documents")
+      .attach("file", PNG_1PX, `qfiltro-${suffix}-beta.png`);
+    expect(up2.status).toBe(201);
+
+    const both = await request(app.getHttpServer()).get(
+      `/api/v1/documents?q=qfiltro-${suffix}&limit=100`,
+    );
+    expect(both.status).toBe(200);
+    expect(both.body.total).toBe(2);
+
+    const one = await request(app.getHttpServer()).get(
+      `/api/v1/documents?q=qfiltro-${suffix}-alfa`,
+    );
+    expect(one.status).toBe(200);
+    expect(one.body.total).toBe(1);
+    expect(one.body.items[0].filename).toBe(`qfiltro-${suffix}-alfa.png`);
+
+    const none = await request(app.getHttpServer()).get("/api/v1/documents?q=zzz-sin-coincidencia");
+    expect(none.status).toBe(200);
+    expect(none.body.total).toBe(0);
+    expect(none.body.items).toHaveLength(0);
+  });
 });
