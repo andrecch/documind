@@ -95,6 +95,18 @@
       "ready_for_review": "POR REVISAR",
       "archivado": "ARCHIVADA",
       "error": "ERROR"
+    },
+    "filters": {
+      "type": "TIPO",
+      "status": "ESTADO",
+      "from": "DESDE",
+      "to": "HASTA",
+      "query": "BÚSQUEDA",
+      "search": "buscar por nombre de archivo",
+      "action": "BUSCAR",
+      "all": "TODOS",
+      "more": "VER MÁS",
+      "results": "{count} documento(s)"
     }
   },
   "review": {

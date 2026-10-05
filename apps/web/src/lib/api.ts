@@ -103,10 +103,22 @@ export const api = {
   },
 
   listDocuments(
-    params: { status?: DocumentStatus; limit?: number; offset?: number } = {},
+    params: {
+      status?: DocumentStatus;
+      docType?: DocumentType;
+      q?: string;
+      from?: string;
+      to?: string;
+      limit?: number;
+      offset?: number;
+    } = {},
   ): Promise<{ items: DocumentSummary[]; total: number }> {
     const query = new URLSearchParams();
     if (params.status) query.set("status", params.status);
+    if (params.docType) query.set("docType", params.docType);
+    if (params.q) query.set("q", params.q);
+    if (params.from) query.set("createdFrom", params.from);
+    if (params.to) query.set("createdTo", params.to);
     if (params.limit != null) query.set("limit", String(params.limit));
     if (params.offset != null) query.set("offset", String(params.offset));
     const suffix = query.size > 0 ? `?${query.toString()}` : "";

@@ -95,6 +95,18 @@
       "ready_for_review": "TO REVIEW",
       "archivado": "ARCHIVED",
       "error": "ERROR"
+    },
+    "filters": {
+      "type": "TYPE",
+      "status": "STATUS",
+      "from": "FROM",
+      "to": "TO",
+      "query": "SEARCH",
+      "search": "search by filename",
+      "action": "SEARCH",
+      "all": "ALL",
+      "more": "SHOW MORE",
+      "results": "{count} document(s)"
     }
   },
   "review": {
