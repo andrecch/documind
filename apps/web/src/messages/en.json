@@ -107,6 +107,13 @@
       "all": "ALL",
       "more": "SHOW MORE",
       "results": "{count} document(s)"
+    },
+    "delete": {
+      "confirmQuestion": "DELETE THIS ARCHIVED SHEET?",
+      "yes": "YES",
+      "no": "NO",
+      "deleted": "DELETED",
+      "error": "COULD NOT DELETE — RETRY"
     }
   },
   "review": {

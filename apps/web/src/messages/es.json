@@ -107,6 +107,13 @@
       "all": "TODOS",
       "more": "VER MÁS",
       "results": "{count} documento(s)"
+    },
+    "delete": {
+      "confirmQuestion": "¿ELIMINAR ARCHIVADA?",
+      "yes": "SÍ",
+      "no": "NO",
+      "deleted": "ELIMINADA",
+      "error": "NO SE PUDO ELIMINAR — REINTENTE"
     }
   },
   "review": {

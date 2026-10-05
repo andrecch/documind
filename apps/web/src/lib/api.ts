@@ -192,6 +192,15 @@ export const api = {
     });
   },
 
+  async deleteDocument(documentId: string): Promise<void> {
+    try {
+      await call<{ ok: boolean }>(`/documents/${documentId}`, { method: "DELETE" });
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "DOCUMENT_NOT_FOUND") return;
+      throw error;
+    }
+  },
+
   searchDocs(params: SearchRequest): Promise<SearchResponse> {
     return call<SearchResponse>("/search", {
       method: "POST",
