@@ -25,12 +25,12 @@ Los documentos administrativos (facturas, contratos, recibos, documentación, pr
 
 ## 4. Alcance por fases
 
-| Fase                     | Contenido                                                                                                                                                   | Estado                |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| **UI inicial (M0)**      | Monorepo + Docker (Postgres/pgvector) + mundo visual «Talonario» con Subir y Revisión (visor)                                                               | ✅ hecho              |
-| **M1 — Loop de ingesta** | Backend NestJS, upload real, OCR con LLM de visión, **formulario editable** (talonario), gate de confirmación, embeddings padre/hijo, persistencia completa | ✅ hecho (2026-10-03) |
-| **M2 — Recuperación**    | `/search` semántica, **chat con citas**, pantalla de Configuración (API key cifrada, catálogo de modelos free)                                              | ✅ hecho (2026-10-04) |
-| **M3 — Archivo**         | Historial con filtros por tipo, **re-edición de archivados en la web** (la API ya la soporta desde M1), export, afinado                                     | pendiente             |
+| Fase                     | Contenido                                                                                                                                                                                                                                                                     | Estado                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **UI inicial (M0)**      | Monorepo + Docker (Postgres/pgvector) + mundo visual «Talonario» con Subir y Revisión (visor)                                                                                                                                                                                 | ✅ hecho              |
+| **M1 — Loop de ingesta** | Backend NestJS, upload real, OCR con LLM de visión, **formulario editable** (talonario), gate de confirmación, embeddings padre/hijo, persistencia completa                                                                                                                   | ✅ hecho (2026-10-03) |
+| **M2 — Recuperación**    | `/search` semántica, **chat con citas**, pantalla de Configuración (API key cifrada, catálogo de modelos free)                                                                                                                                                                | ✅ hecho (2026-10-04) |
+| **M3 — Archivo**         | Historial avanzado (filtros tipo/estado/fecha + búsqueda por filename + paginación «VER MÁS»), eliminar documento con confirmación inline, **re-edición de archivados en la web** (modo explícito, la API ya la soporta desde M1), export de la ficha (JSON) y de ítems (CSV) | ✅ hecho (2026-10-05) |
 
 **Fuera de alcance:** OCR local, autenticación multiusuario, facturación, apps móviles nativas, S3 (disco local vía volumen Docker en el MVP).
 
@@ -63,7 +63,7 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 
 > Como usuario, quiero reabrir un documento archivado, corregir algo y guardar, sabiendo que sus vectores se actualizan.
 
-- **AC3.1** ✅ (API; UI de re-edición en M3) Editable + **re-embed** en cada guardado vía `PATCH /extraction/confirmed` (los chunks antiguos se reemplazan transaccionalmente); la BD siempre refleja la verdad actual. La web muestra el archivado en solo lectura hasta M3.
+- **AC3.1** ✅ (completo: API + UI, M3) Editable + **re-embed** en cada guardado vía `PATCH /extraction/confirmed` (los chunks antiguos se reemplazan transaccionalmente); la BD siempre refleja la verdad actual. La web muestra el archivado en solo lectura con **modo edición explícito** («EDITAR ARCHIVADA» → aviso de regeneración de vectores → autoguardado sin gate de confirmación).
 - **AC3.2** ✅ Cada edición guarda nueva auditoría (`field_audit` recalculado + revisión `post_confirm_edit` en el historial).
 
 ### US4 · Búsqueda semántica (M2 — ✅ hecho 2026-10-04)
@@ -106,6 +106,9 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 - **RF9** Chat grounded (contexto exclusivo) con citas clicables y streaming.
 - **RF10** Configuración: API key cifrada, catálogo free, modelos por propósito (visión / embedding / chat).
 - **RF11** i18n es/en · **RF12** tema claro/oscuro.
+- **RF13** ✅ (M3) Historial del archivo: filtros por tipo/estado/fecha + búsqueda por nombre de archivo (`q`, ILIKE), paginación manual «VER MÁS» (offset).
+- **RF14** ✅ (M3) Eliminar documento: `DELETE /documents/:id` con cascada de FKs + unlink del archivo en disco, con confirmación inline en la tarjeta.
+- **RF15** ✅ (M3) Export desde Revisión: ficha completa (JSON, cliente) e ítems por tipo de documento (CSV con BOM y separador `;`).
 
 ## 8. Requisitos no funcionales
 

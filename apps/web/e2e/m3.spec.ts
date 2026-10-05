@@ -29,6 +29,7 @@ test("M3 parte B: export de ficha JSON y de ítems CSV en archivado read-only", 
 }: {
   page: Page;
 }) => {
+  await purgeByPrefix("m3x-");
   const name = `m3x-${randomUUID()}.png`;
   await uploadAndConfirm(page, name);
 
@@ -68,11 +69,40 @@ test("M3 parte B: export de ficha JSON y de ítems CSV en archivado read-only", 
   expect(lines).toHaveLength(3);
   expect(lines[0]).toBe("DESCRIPCIÓN;CANT.;VALOR UNIT.;VALOR TOTAL");
   expect(lines[1]).toContain("Instalación eléctrica");
+
+  await deleteApi(await idFor(name));
+  const gone = await readApi<{ items: unknown[] }>(
+    await fetch(`${API}/documents?q=${encodeURIComponent(name)}`),
+  );
+  expect(gone.items).toHaveLength(0);
 });
+
+async function idFor(name: string): Promise<string> {
+  const found = await readApi<{ items: { id: string }[] }>(
+    await fetch(`${API}/documents?q=${encodeURIComponent(name)}`),
+  );
+  const id = found.items[0]?.id;
+  if (!id) throw new Error(`document ${name} not found`);
+  return id;
+}
 
 async function readApi<T>(res: Response): Promise<T> {
   expect(res.status).toBe(200);
   return (await res.json()) as T;
+}
+
+async function deleteApi(id: string): Promise<void> {
+  const res = await fetch(`${API}/documents/${id}`, { method: "DELETE" });
+  expect([200, 404]).toContain(res.status);
+}
+
+async function purgeByPrefix(prefix: string): Promise<void> {
+  const listing = await readApi<{ items: { id: string }[] }>(
+    await fetch(`${API}/documents?q=${encodeURIComponent(prefix)}&limit=100`),
+  );
+  for (const doc of listing.items) {
+    await deleteApi(doc.id);
+  }
 }
 
 async function fetchExtraction(documentId: string) {
@@ -88,6 +118,7 @@ test("M3 parte A: edición de archivada persiste con auditoría y los chunks se 
 }: {
   page: Page;
 }) => {
+  await purgeByPrefix("m3-");
   const name = `m3-${randomUUID()}.png`;
   await uploadAndConfirm(page, name);
 
@@ -137,4 +168,130 @@ test("M3 parte A: edición de archivada persiste con auditoría y los chunks se 
   expect(
     hits.items.some((hit) => hit.documentId === id && hit.content.includes("Revisión M3")),
   ).toBe(true);
+
+  await deleteApi(id);
+  const gone = await readApi<{ items: unknown[] }>(
+    await fetch(`${API}/documents?q=${encodeURIComponent(name)}`),
+  );
+  expect(gone.items).toHaveLength(0);
+});
+
+test("M3 cierre: historial con filtros, VER MÁS, edición, export y eliminación", async ({
+  page,
+}: {
+  page: Page;
+}) => {
+  test.setTimeout(180_000);
+  const stamp = randomUUID().slice(0, 8);
+  const name = `m3full-${stamp}.png`;
+  const buffer = readFileSync("e2e/fixtures/sample.png");
+
+  for (let i = 0; i < 21; i += 1) {
+    const form = new FormData();
+    form.append(
+      "file",
+      new Blob([new Uint8Array(buffer)], { type: "image/png" }),
+      `m3full-${stamp}-${i}.png`,
+    );
+    const res = await fetch(`${API}/documents`, { method: "POST", body: form });
+    expect(res.status).toBe(201);
+  }
+
+  await uploadAndConfirm(page, name);
+  await page.getByRole("button", { name: "Volver" }).click();
+  await expect(page.getByText("ARCHIVO — ÚLTIMOS DOCUMENTOS")).toBeVisible();
+
+  const qInput = page.getByPlaceholder("buscar por nombre de archivo");
+  await qInput.fill(`m3full-${stamp}`);
+  await page.getByRole("button", { name: "BUSCAR", exact: true }).click();
+  await expect(page.getByText("22 documento(s)", { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
+
+  const more = page.getByRole("button", { name: "VER MÁS" });
+  await expect(more).toBeVisible();
+  await expect(page.locator("ul.divide-y li")).toHaveCount(20);
+  await more.click();
+  await expect(page.locator("ul.divide-y li")).toHaveCount(22, { timeout: 10_000 });
+
+  const typeSelect = page.getByRole("combobox").first();
+  const statusSelect = page.getByRole("combobox").nth(1);
+
+  await typeSelect.selectOption("factura");
+  await expect(page.locator("ul.divide-y li")).toHaveCount(1, { timeout: 10_000 });
+
+  await statusSelect.selectOption("archivado");
+  await expect(page.locator("ul.divide-y li")).toHaveCount(1, { timeout: 10_000 });
+
+  await typeSelect.selectOption("");
+  await expect(page.locator("ul.divide-y li")).toHaveCount(1, { timeout: 10_000 });
+
+  await statusSelect.selectOption("pending");
+  await expect(page.locator("ul.divide-y li")).toHaveCount(20, { timeout: 10_000 });
+  await expect(page.getByText("21 documento(s)", { exact: true })).toBeVisible();
+
+  const fromInput = page.locator('input[type="date"]').first();
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  await fromInput.fill(tomorrow);
+  await expect(page.locator("ul.divide-y li")).toHaveCount(0, { timeout: 10_000 });
+  await fromInput.fill("");
+  await expect(page.locator("ul.divide-y li")).toHaveCount(20, { timeout: 10_000 });
+
+  await statusSelect.selectOption("");
+  await expect(page.locator("ul.divide-y li")).toHaveCount(20, { timeout: 10_000 });
+  await expect(page.getByText("22 documento(s)", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: new RegExp(name.replace(/[-.]/g, "[$&]")) }).click();
+  await expect(page).toHaveURL(/\/es\/review$/, { timeout: 10_000 });
+  await page.getByRole("button", { name: "EDITAR ARCHIVADA" }).click();
+  await page.getByLabel("NÚMERO / REFERENCIA").fill("FAC-M3-CLOSE");
+  await expect(page.getByText("GUARDADO", { exact: true })).toBeVisible({ timeout: 10_000 });
+
+  await page.getByRole("button", { name: "EXPORTAR" }).click();
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("menuitem", { name: "FICHA (.JSON)" }).click(),
+  ]);
+  const json = JSON.parse(readFileSync(await download.path(), "utf8")) as {
+    confirmed_data: { numero: string };
+  };
+  expect(json.confirmed_data.numero).toBe("FAC-M3-CLOSE");
+
+  await page.getByRole("button", { name: "Volver" }).click();
+  await expect(page.getByText("ARCHIVO — ÚLTIMOS DOCUMENTOS")).toBeVisible();
+  const qAfterReview = page.getByPlaceholder("buscar por nombre de archivo");
+  await qAfterReview.fill(`m3full-${stamp}`);
+  await page.getByRole("button", { name: "BUSCAR", exact: true }).click();
+  await expect(page.getByText("22 documento(s)", { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
+  const targetCard = page
+    .getByRole("button", { name: new RegExp(name.replace(/[-.]/g, "[$&]")) })
+    .first();
+  const targetItem = page.locator("ul.divide-y li").filter({ has: targetCard });
+  await targetItem.getByRole("button").last().click();
+  await expect(page.getByText("¿ELIMINAR ARCHIVADA?")).toBeVisible();
+  await page.getByRole("button", { name: "SÍ", exact: true }).click();
+  await expect(page.getByText("ELIMINADA", { exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(targetItem).toHaveCount(0, { timeout: 10_000 });
+  await expect(page.getByText("21 documento(s)", { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
+
+  const removed = await readApi<{ items: { id: string }[] }>(
+    await fetch(`${API}/documents?q=${encodeURIComponent(name)}`),
+  );
+  expect(removed.items).toHaveLength(0);
+
+  const listing = await readApi<{ items: { id: string }[] }>(
+    await fetch(`${API}/documents?q=${encodeURIComponent(`m3full-${stamp}`)}&limit=100`),
+  );
+  expect(listing.items).toHaveLength(21);
+  for (const doc of listing.items) {
+    await deleteApi(doc.id);
+  }
+  const cleanup = await readApi<{ total: number }>(
+    await fetch(`${API}/documents?q=${encodeURIComponent(`m3full-${stamp}`)}&limit=100`),
+  );
+  expect(cleanup.total).toBe(0);
 });

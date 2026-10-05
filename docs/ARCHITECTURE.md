@@ -1,6 +1,6 @@
 # DocuMind — Arquitectura
 
-> Estado: **v2.2** · 2026-10-04 · Actualizada tras el cierre de M2: la capa de recuperación (búsqueda + chat + configuración) está construida y verificada (v2.1 · 2026-10-01 · cierre de M1).
+> Estado: **v2.3** · 2026-10-05 · Actualizada tras el cierre de M3: la capa de archivo (historial avanzado con filtros/búsqueda/paginación/eliminación, re-edición de archivados en la web y export JSON/CSV) está construida y verificada (v2.2 · 2026-10-04 · cierre de M2 · v2.1 · 2026-10-01 · cierre de M1).
 
 ## 1. Resumen
 
@@ -163,24 +163,25 @@ INSERT INTO model_config (provider, purpose, model_id, dimensions) VALUES
 
 Base `http://localhost:4000/api/v1` · Swagger `/docs`.
 
-| Método | Ruta                                  | Descripción                                                                                                      |
-| ------ | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| GET    | `/health`                             | API + BD + provider config                                                                                       |
-| POST   | `/documents`                          | Upload (multipart) → `201 {id, filename, status}`                                                                |
-| GET    | `/documents/:id/file`                 | Original para preview                                                                                            |
-| POST   | `/documents/:id/extract`              | OCR síncrono (semáforo 409 · cap 8 páginas 422 · backoff) → draft `{extractionId, docType, confidence, llmData}` |
-| GET    | `/documents/:id/extraction`           | Ficha (draft o confirmed)                                                                                        |
-| PATCH  | `/documents/:id/extraction`           | Edita el draft (valida Zod; servidor recalcula `field_audit`; 409 si está confirmada)                            |
-| POST   | `/documents/:id/confirm`              | **Gate**: valida → genera texto natural → embed padre+ítems → inserta chunks → `archivado`                       |
-| PATCH  | `/documents/:id/extraction/confirmed` | Edita un archivado → guarda auditoría → **re-embed** transaccional                                               |
-| GET    | `/documents`                          | Historial (filtros: tipo, estado, fecha)                                                                         |
-| GET    | `/documents/:id`                      | Ficha resumen de un documento (deep-link desde citas)                                                            |
-| POST   | `/search`                             | `{query, docType?, from?, to?, limit?}` → `{items[], tookMs}` (kNN cosine halfvec)                               |
-| POST   | `/chat`                               | `{message, sessionId?}` → **SSE**: `delta…` → `citations` (con `messageId`, `sessionId`)                         |
-| GET    | `/settings/provider`                  | `{hint}` o `{hint: null}` (nunca la clave)                                                                       |
-| PUT    | `/settings/provider`                  | `{apiKey}` → cifrada → `{hint}` (400 sin/clave inválida `DOCUMIND_MASTER_KEY`)                                   |
-| GET    | `/settings/models?purpose&free`       | Objeto `{ current, available: provider.listModels(...) }`                                                        |
-| PUT    | `/settings/models`                    | `{purpose, modelId, dimensions?}` → upsert por purpose (respeta UNIQUE 0001)                                     |
+| Método | Ruta                                  | Descripción                                                                                                       |
+| ------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| GET    | `/health`                             | API + BD + provider config                                                                                        |
+| POST   | `/documents`                          | Upload (multipart) → `201 {id, filename, status}`                                                                 |
+| GET    | `/documents`                          | Historial (filtros: tipo, estado, fecha, `q` filename ILIKE; limit/offset)                                        |
+| GET    | `/documents/:id`                      | Ficha resumen de un documento (deep-link desde citas)                                                             |
+| GET    | `/documents/:id/file`                 | Original para preview                                                                                             |
+| DELETE | `/documents/:id`                      | Elimina con cascada (chunks/extractions/revisiones) + unlink del archivo en disco → `200 {ok}` · 404 si no existe |
+| POST   | `/documents/:id/extract`              | OCR síncrono (semáforo 409 · cap 8 páginas 422 · backoff) → draft `{extractionId, docType, confidence, llmData}`  |
+| GET    | `/documents/:id/extraction`           | Ficha (draft o confirmed)                                                                                         |
+| PATCH  | `/documents/:id/extraction`           | Edita el draft (valida Zod; servidor recalcula `field_audit`; 409 si está confirmada)                             |
+| POST   | `/documents/:id/confirm`              | **Gate**: valida → genera texto natural → embed padre+ítems → inserta chunks → `archivado`                        |
+| PATCH  | `/documents/:id/extraction/confirmed` | Edita un archivado → guarda auditoría → **re-embed** transaccional                                                |
+| POST   | `/search`                             | `{query, docType?, from?, to?, limit?}` → `{items[], tookMs}` (kNN cosine halfvec)                                |
+| POST   | `/chat`                               | `{message, sessionId?}` → **SSE**: `delta…` → `citations` (con `messageId`, `sessionId`)                          |
+| GET    | `/settings/provider`                  | `{hint}` o `{hint: null}` (nunca la clave)                                                                        |
+| PUT    | `/settings/provider`                  | `{apiKey}` → cifrada → `{hint}` (400 sin/clave inválida `DOCUMIND_MASTER_KEY`)                                    |
+| GET    | `/settings/models?purpose&free`       | Objeto `{ current, available: provider.listModels(...) }`                                                         |
+| PUT    | `/settings/models`                    | `{purpose, modelId, dimensions?}` → upsert por purpose (respeta UNIQUE 0001)                                      |
 
 **Errores uniformes:** `{ "code", "message", "details" }`.
 
@@ -264,4 +265,5 @@ TS strict · lint/typecheck gates (Turbo) · i18n en todo texto visible · commi
 
 - **M1 — Loop de ingesta** ✅ (2026-10-01): apps/api + migraciones Drizzle (§4) + upload + OCR + **ficha editable talonario** + confirmar → embed → DB + re-embed en archivados (API) + historial mínimo.
 - **M2 — Recuperación** ✅ (2026-10-04): `/search` kNN pgvector con filtros y regla del padre + `/chat` grounded con SSE y citas híbridas + historial en BD (`chat_messages`) + Configuración: API key cifrada AES-256-GCM, catálogo free vivo, cambio de modelos por propósito (factoría BD > env > fake con `DOCUMIND_MASTER_KEY`).
-- **M3 — Archivo**: historial con filtros avanzados, re-embed UX de archivados en la web, export.
+- **M3 — Archivo** ✅ (2026-10-05): historial avanzado (filtros tipo/estado/fecha + búsqueda por filename `q` + paginación manual «VER MÁS»), `DELETE /documents/:id` (cascada + unlink de disco) con confirmación inline en la tarjeta, re-edición de archivados en la web (modo explícito `EDITAR ARCHIVADA` → `PATCH /extraction/confirmed` con re-embed y visor de auditoría) y export de ficha JSON + ítems CSV desde Revisión (generado en cliente).
+- **M4 (siguiente)**: i18n de labels del grid (`AC7.1` de shared), y afinado.
