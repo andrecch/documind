@@ -10,7 +10,7 @@ import type { SearchRequest, SearchResponse } from "@documind/shared";
 import { searchRequestSchema } from "@documind/shared";
 import { BadRequestException } from "@nestjs/common";
 import { SearchService } from "./search.service";
-import { SearchQueryDto, SearchResponseDto, ValidationErrorDto } from "./dto";
+import { SearchQueryDto, SearchResponseDto, SearchValidationErrorDto } from "./dto";
 
 @ApiTags("search")
 @Controller("search")
@@ -22,7 +22,7 @@ export class SearchController {
   @ApiOperation({ summary: "Búsqueda semántica kNN (coseno halfvec) con filtros" })
   @ApiBody({ type: SearchQueryDto })
   @ApiOkResponse({ type: SearchResponseDto })
-  @ApiBadRequestResponse({ type: ValidationErrorDto })
+  @ApiBadRequestResponse({ type: SearchValidationErrorDto })
   async search(@Body() body: unknown): Promise<SearchResponse> {
     const parsed = searchRequestSchema.safeParse(body ?? {});
     if (!parsed.success) {

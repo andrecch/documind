@@ -1,6 +1,6 @@
 # DocuMind — Documento de Requisitos de Producto (PRD)
 
-> Estado: **v2.1** · 2026-10-03 · M1 cerrado: los criterios de aceptación llevan el estado real tras la verificación end-to-end con OpenRouter (v2.0 · 2026-09-26 · sesión de alineación grill-me: el producto es un **RAG de documentos validado por humano**).
+> Estado: **v2.1** · 2026-10-03 · M1 cerrado: los criterios de aceptación llevan el estado real tras la verificación end-to-end con OpenRouter (v2.0 · 2026-09-26 · sesión de alineación grill-me: el producto es un **RAG de documentos validado por humano**). M2 construido el 2026-10-04 (US4–US6 implementados; ver estados marcados con ✅).
 
 ## 1. Visión
 
@@ -29,7 +29,7 @@ Los documentos administrativos (facturas, contratos, recibos, documentación, pr
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
 | **UI inicial (M0)**      | Monorepo + Docker (Postgres/pgvector) + mundo visual «Talonario» con Subir y Revisión (visor)                                                               | ✅ hecho              |
 | **M1 — Loop de ingesta** | Backend NestJS, upload real, OCR con LLM de visión, **formulario editable** (talonario), gate de confirmación, embeddings padre/hijo, persistencia completa | ✅ hecho (2026-10-03) |
-| **M2 — Recuperación**    | `/search` semántica, **chat con citas**, pantalla de Configuración (API key cifrada, catálogo de modelos free)                                              | pendiente             |
+| **M2 — Recuperación**    | `/search` semántica, **chat con citas**, pantalla de Configuración (API key cifrada, catálogo de modelos free)                                              | ✅ hecho (2026-10-04) |
 | **M3 — Archivo**         | Historial con filtros por tipo, **re-edición de archivados en la web** (la API ya la soporta desde M1), export, afinado                                     | pendiente             |
 
 **Fuera de alcance:** OCR local, autenticación multiusuario, facturación, apps móviles nativas, S3 (disco local vía volumen Docker en el MVP).
@@ -66,27 +66,27 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 - **AC3.1** ✅ (API; UI de re-edición en M3) Editable + **re-embed** en cada guardado vía `PATCH /extraction/confirmed` (los chunks antiguos se reemplazan transaccionalmente); la BD siempre refleja la verdad actual. La web muestra el archivado en solo lectura hasta M3.
 - **AC3.2** ✅ Cada edición guarda nueva auditoría (`field_audit` recalculado + revisión `post_confirm_edit` en el historial).
 
-### US4 · Búsqueda semántica (M2 — pendiente)
+### US4 · Búsqueda semántica (M2 — ✅ hecho 2026-10-04)
 
 > Como usuario, quiero buscar en mis documentos archivados por significado («la factura de la instalación eléctrica»).
 
-- **AC4.1** `/search` devuelve los documentos más relevantes con el fragmento fuente resaltado.
-- **AC4.2** Filtros por tipo de documento y fecha.
+- **AC4.1** ✅ `/search` devuelve los documentos más relevantes con el fragmento fuente resaltado (`<mark>` sobre matches, normalización sin acentos).
+- **AC4.2** ✅ Filtros por tipo de documento y fecha (from/to). El padre acompaña a sus hijos con `similarity: null`.
 
-### US5 · Chat con citas (M2 — pendiente)
+### US5 · Chat con citas (M2 — ✅ hecho 2026-10-04)
 
 > Como usuario, quiero preguntarle a DocuMind sobre mis documentos y recibir respuestas que citen la fuente.
 
-- **AC5.1** El chat responde **exclusivamente** con contexto recuperado (chunks pgvector); nada inventado.
-- **AC5.2** Cada dato de la respuesta lleva **cita clicable** a la ficha del documento fuente.
-- **AC5.3** Respuesta en streaming; modelo de chat `Qwen3.8 27B :free`.
+- **AC5.1** ✅ El chat responde **exclusivamente** con contexto recuperado (chunks pgvector, limit 6); nada inventado.
+- **AC5.2** ✅ Cada dato de la respuesta lleva **cita clicable** a la ficha del documento fuente (híbridas: `[n]` validado con fallback al contexto completo).
+- **AC5.3** ✅ Respuesta en streaming SSE (token a token); modelo de chat `qwen/qwen3.8-27b:free`.
 
-### US6 · Configuración (M2 — pendiente)
+### US6 · Configuración (M2 — ✅ hecho 2026-10-04)
 
 > Como usuario, quiero agregar mi API key de OpenRouter desde la UI y elegir los modelos de visión/embedding/chat.
 
-- **AC6.1** La clave se guarda **cifrada** (AES-256-GCM) en BD; la UI solo ve una máscara `••••4f2a`.
-- **AC6.2** El selector de modelos lista los modelos gratuitos vigentes del catálogo de OpenRouter; la elección se persiste en BD (nada hardcodeado).
+- **AC6.1** ✅ La clave se guarda **cifrada** (AES-256-GCM + `DOCUMIND_MASTER_KEY`) en BD; la UI solo ve una máscara `••••6d9b`.
+- **AC6.2** ✅ El selector de modelos lista los modelos gratuitos vigentes del catálogo de OpenRouter (`provider.listModels` filtrado por modality); la elección se persiste en BD (`model_config`, UNIQUE 0001) y el health la refleja.
 
 ### US7 · Idioma · US8 · Tema ✅ (M1)
 
@@ -110,10 +110,10 @@ Profesional independiente hispanohablante que digitaliza sus propios documentos 
 ## 8. Requisitos no funcionales
 
 - **RNF1 Estable** ✅ — extracción síncrona con estados visibles (pendiente → leyendo → listo/error), **reintentos con backoff + jitter** ante rate limits del tier free; concurrencia resuelta con **semáforo en memoria de 1 extracción** (decisión 13: uso personal; cola persistente en BD queda fuera de alcance M1).
-- **RNF2 Rápida** ✅ (ingesta) — extracción real medida 7.1 s en 1 página (< 10 s/página); confirmación con 3 embeddings en 1 s; búsqueda < 1 s local (M2).
+- **RNF2 Rápida** ✅ — extracción real medida 7.1 s en 1 página (< 10 s/página); confirmación con 3 embeddings en 1 s; búsqueda < 1 s local (verificado en M2 con `tookMs` y gate e2e).
 - **RNF3 Eficiente** ✅ — solo modelos free; 1 embedding padre + N hijos por documento (2048 dims verificadas contra Nemotron real).
 - **RNF4 Privacidad** ✅ — los archivos permanecen en disco local (`uploads/`); solo las páginas se envían al LLM elegido.
-- **RNF5 Seguridad** — **M1**: API key solo por entorno/`.env` (decisión 11); cifrado AES-256-GCM en BD con UI de Configuración en M2. Nunca en logs ni frontend.
+- **RNF5 Seguridad** ✅ — **M1**: API key solo por entorno/`.env` (decisión 11); **M2**: AES-256-GCM en BD con UI de Configuración, prioridad BD > env > fake, `DOCUMIND_MASTER_KEY` exigida al guardar. Nunca en logs ni frontend.
 - **RNF6 Accesibilidad** — contraste AA, foco visible, teclado.
 - **RNF7 Calidad** — TypeScript strict; lint/typecheck/tests como gates.
 

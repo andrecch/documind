@@ -1,6 +1,6 @@
 # DocuMind — Arquitectura
 
-> Estado: **v2.1** · 2026-10-01 · Actualizada tras el cierre de M1: refleja el esquema, contratos y decisiones realmente implementados (antes v2.0 · 2026-09-26, diseño objetivo).
+> Estado: **v2.2** · 2026-10-04 · Actualizada tras el cierre de M2: la capa de recuperación (búsqueda + chat + configuración) está construida y verificada (v2.1 · 2026-10-01 · cierre de M1).
 
 ## 1. Resumen
 
@@ -118,7 +118,7 @@ CREATE INDEX idx_chunks_embedding ON document_chunks
   USING hnsw ((embedding::halfvec(2048)) halfvec_cosine_ops);
 CREATE INDEX idx_chunks_document ON document_chunks(document_id);
 
--- Chat (M2 — tabla aún no creada)
+-- Chat (persistido desde M2)
 CREATE TABLE chat_messages (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID NOT NULL,
@@ -174,11 +174,13 @@ Base `http://localhost:4000/api/v1` · Swagger `/docs`.
 | POST   | `/documents/:id/confirm`              | **Gate**: valida → genera texto natural → embed padre+ítems → inserta chunks → `archivado`                       |
 | PATCH  | `/documents/:id/extraction/confirmed` | Edita un archivado → guarda auditoría → **re-embed** transaccional                                               |
 | GET    | `/documents`                          | Historial (filtros: tipo, estado, fecha)                                                                         |
-| POST   | `/search`                             | (M2) `{query, docType?, from?, to?}` → top-k chunks con documento y fragmento                                    |
-| POST   | `/chat`                               | (M2) `{message, sessionId}` → SSE stream con respuesta grounded + `citations[]`                                  |
-| GET    | `/settings/models?purpose&free=true`  | (M2) Catálogo del proveedor                                                                                      |
-| PUT    | `/settings/models`                    | (M2) `{purpose, modelId, dimensions?}`                                                                           |
-| PUT    | `/settings/provider`                  | (M2) API key (cifrada) → `{hint}`                                                                                |
+| GET    | `/documents/:id`                      | Ficha resumen de un documento (deep-link desde citas)                                                            |
+| POST   | `/search`                             | `{query, docType?, from?, to?, limit?}` → `{items[], tookMs}` (kNN cosine halfvec)                               |
+| POST   | `/chat`                               | `{message, sessionId?}` → **SSE**: `delta…` → `citations` (con `messageId`, `sessionId`)                         |
+| GET    | `/settings/provider`                  | `{hint}` o `{hint: null}` (nunca la clave)                                                                       |
+| PUT    | `/settings/provider`                  | `{apiKey}` → cifrada → `{hint}` (400 sin/clave inválida `DOCUMIND_MASTER_KEY`)                                   |
+| GET    | `/settings/models?purpose&free`       | Objeto `{ current, available: provider.listModels(...) }`                                                        |
+| PUT    | `/settings/models`                    | `{purpose, modelId, dimensions?}` → upsert por purpose (respeta UNIQUE 0001)                                     |
 
 **Errores uniformes:** `{ "code", "message", "details" }`.
 
@@ -234,21 +236,21 @@ export interface LLMProvider {
 }
 ```
 
-- `OpenRouterProvider` (`apps/api/src/extractions/provider.ts`): **fetch directo** a `https://openrouter.ai/api/v1` — chat/completions con `response_format: json_schema` + `usage`, `/embeddings`, `/models`. `FakeProvider` bajo `DOCUMIND_FAKE_PROVIDERS=1`. La factoría DI (`PROVIDER`) resuelve modelo por propósito desde `model_config` (BD), nunca hardcodeado.
+- `OpenRouterProvider` (`apps/api/src/extractions/provider.ts`): **fetch directo** a `https://openrouter.ai/api/v1` — chat/completions con `response_format: json_schema` + `usage`, `/embeddings`, `/models`; `chatStream` parsea SSE incremental (`delta.content` + `delta.reasoning`) con reintentos de backoff antes del primer byte. `FakeProvider` bajo `DOCUMIND_FAKE_PROVIDERS=1`. La factoría DI (`PROVIDER`) resuelve modelo por propósito desde `model_config` (BD), nunca hardcodeado.
 - Backoff exponencial + jitter (429/5xx/timeout, máx 5 intentos) y 1 retry con prompt de corrección cuando el JSON del LLM viene malformado.
-- **M1**: la API key vive solo en el entorno (`OPENROUTER_API_KEY`, leído de `apps/api/.env` o del `.env` de la raíz). El cifrado en `provider_settings` (AES-256-GCM) y su UI llegan en M2; la clave descifrada solo existe en memoria del backend al llamar al proveedor.
+- **API key (M2)**: prioridad **BD > env > fake**. La key cifrada vive en `provider_settings` (`api_key_cipher` text con `base64(iv|tag|cipher)`, AES-256-GCM con `DOCUMIND_MASTER_KEY`); se guarda por `PUT /settings/provider` (400 `MASTER_KEY_MISSING`/`MASTER_KEY_INVALID`); el descifrado es perezoso (falla al primer uso del provider, no al arrancar) y solo existe en memoria del backend al llamar al proveedor. Respaldo: `OPENROUTER_API_KEY` por entorno/`.env`.
 
 ## 8. Estrategia RAG (embeddings + grounding)
 
 - **Texto natural del documento** (padre), generado desde `confirmed_data` con plantilla por tipo de documento (M1: plantillas en español — corpus es; detección de idioma se evaluará si llegan documentos en otros idiomas): «Factura FAC-2026-0847 emitida por Suministros Andinos S.A. (NIT …) · fecha 2026-09-12 · total COP 2915500».
 - **Ítems como tabla genérica**: `packages/shared` define `DOC_TYPE_TABLE_SCHEMA` — columnas (key, label, tipo, orden) por tipo de documento. Las filas de `llm_data`/`confirmed_data` son `Array<Record<string, string|number>>`; el prompt del LLM usa los nombres de clave del esquema, la UI (ItemsGrid) renderiza las mismas columnas y el generador de texto natural las recorre. Soporta documentos densos reales (declaración DIAN ~15 columnas × N filas).
 - **Chunks hijos por fila de tabla** (kind=item, item_index=fila): texto natural de la fila con sus columnas etiquetadas → recall fino para líneas específicas.
-- **Retrieval**: kNN coseno (top-k 6 por defecto) + filtros (doc_type, fecha). El padre siempre acompaña a sus hijos en los resultados (dédup por document_id con ranking del mejor chunk).
-- **Chat grounded**: prompt de sistema estricto («responde SOLO con el contexto; si no está, dilo»); cada afirmación mapea a `citations[] {documentId, field|itemIndex}`; SSE streaming; historial de sesión en `chat_messages`.
+- **Retrieval**: kNN coseno (top-k 6 por defecto, máx 20) casteando ambos lados a `halfvec(2048)` para usar el índice HNSW + dedup por documento (mejor chunk) + filtros (doc_type, fecha from/to). El padre siempre acompaña a sus hijos con `similarity: null`. `tookMs` devuelto (RNF2: < 1 s local).
+- **Chat grounded**: system prompt estricto («responde SOLO con el contexto; si no está, dilo»); historial persistido en `chat_messages` (últimos 8 al prompt); **citas híbridas** — se parsean los marcadores `[n]` de la respuesta validando el rango; si no cita nada o cita fuera de rango → fallback al contexto completo (siempre hay citas). SSE sobre POST (`delta…` → evento final `citations` con `messageId`/`sessionId`).
 
 ## 9. Seguridad de la API key
 
-**M1 (implementado)**: `OPENROUTER_API_KEY` solo por entorno/`.env` (decisión 11 — respaldo), nunca en logs ni hacia el frontend. **M2**: AES-256-GCM con `DOCUMIND_MASTER_KEY` (env, 32B); formato `bytea = [iv|tag|cipher]` en `provider_settings`; solo `api_key_hint` (`••••4f2a`) hacia el frontend; rotación vía PUT.
+**M1-Prioridades (implementado)**: `OPENROUTER_API_KEY` solo por entorno/`.env` (decisión 11 — respaldo), nunca en logs ni hacia el frontend. **M2 (implementado)**: AES-256-GCM con `DOCUMIND_MASTER_KEY` (env, 32B, hex 64); formato `base64(iv|tag|cipher)` en `provider_settings.api_key_cipher` (text); solo `api_key_hint` (`••••4f2a`) hacia el frontend; rotación vía PUT; prioridad BD > env > fake. Nunca en logs ni frontend.
 
 ## 10. Infraestructura
 
@@ -261,5 +263,5 @@ TS strict · lint/typecheck gates (Turbo) · i18n en todo texto visible · commi
 ## 12. Roadmap técnico
 
 - **M1 — Loop de ingesta** ✅ (2026-10-01): apps/api + migraciones Drizzle (§4) + upload + OCR + **ficha editable talonario** + confirmar → embed → DB + re-embed en archivados (API) + historial mínimo.
-- **M2 — Recuperación**: `/search` + `/chat` con citas + Configuración (key cifrada, catálogo).
+- **M2 — Recuperación** ✅ (2026-10-04): `/search` kNN pgvector con filtros y regla del padre + `/chat` grounded con SSE y citas híbridas + historial en BD (`chat_messages`) + Configuración: API key cifrada AES-256-GCM, catálogo free vivo, cambio de modelos por propósito (factoría BD > env > fake con `DOCUMIND_MASTER_KEY`).
 - **M3 — Archivo**: historial con filtros avanzados, re-embed UX de archivados en la web, export.

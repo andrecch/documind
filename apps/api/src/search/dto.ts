@@ -58,7 +58,7 @@ export class SearchResponseDto {
   tookMs!: number;
 }
 
-export class ValidationErrorDto {
+export class SearchValidationErrorDto {
   @ApiProperty({ example: "VALIDATION_ERROR", type: String })
   code!: string;
 
