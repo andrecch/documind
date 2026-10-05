@@ -146,6 +146,21 @@ export const api = {
     });
   },
 
+  async patchConfirmed(documentId: string, data: ExtractionResult): Promise<ExtractionDetail> {
+    try {
+      return await call<ExtractionDetail>(`/documents/${documentId}/extraction/confirmed`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data }),
+      });
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "EXTRACTION_NOT_CONFIRMED") {
+        return this.patchExtraction(documentId, data);
+      }
+      throw error;
+    }
+  },
+
   confirmDocument(documentId: string): Promise<ConfirmResponse> {
     return call<ConfirmResponse>(`/documents/${documentId}/confirm`, { method: "POST" });
   },

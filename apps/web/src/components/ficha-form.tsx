@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Pencil } from "lucide-react";
 import type { ExtractionResult } from "@documind/shared";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type ExtractionDetail } from "@/lib/api";
 import { errorText } from "@/lib/error-text";
 import {
   FICHA_FIELDS,
@@ -81,8 +82,11 @@ export function FichaForm({
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [editingArchived, setEditingArchived] = useState(false);
+  const [auditGlimpse, setAuditGlimpse] = useState<{ count: number; paths: string[] } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<EditableFicha | null>(null);
+  const editable = editingArchived || !readOnly;
 
   useEffect(
     () => () => {
@@ -102,17 +106,26 @@ export function FichaForm({
     if (!target) return;
     pending.current = null;
     try {
-      await api.patchExtraction(docId, toExtraction(target, initial.confianza));
+      const data = toExtraction(target, initial.confianza);
+      const saved: ExtractionDetail = editingArchived
+        ? await api.patchConfirmed(docId, data)
+        : await api.patchExtraction(docId, data);
+      if (saved.fieldAudit) {
+        const paths = Object.keys(saved.fieldAudit);
+        setAuditGlimpse(paths.length > 0 ? { count: paths.length, paths: paths.slice(-3) } : null);
+      } else {
+        setAuditGlimpse(null);
+      }
       setSaveState("saved");
     } catch {
       setSaveState("error");
     }
-  }, [docId, initial.confianza]);
+  }, [docId, initial.confianza, editingArchived]);
 
   const update = useCallback(
     (next: EditableFicha) => {
       setFicha(next);
-      if (readOnly) return;
+      if (!editable) return;
       pending.current = next;
       if (timer.current) clearTimeout(timer.current);
       setSaveState("saving");
@@ -120,7 +133,7 @@ export function FichaForm({
         void persist();
       }, 800);
     },
-    [persist, readOnly],
+    [persist, editable],
   );
 
   const handleConfirm = useCallback(async () => {
@@ -150,7 +163,7 @@ export function FichaForm({
           {docName}
         </span>
         <span className="flex-1" />
-        {!readOnly && saveState !== "idle" && (
+        {editable && saveState !== "idle" && (
           <span
             role="status"
             className={`font-display text-[10.5px] font-bold uppercase tracking-[1.2px] ${
@@ -190,11 +203,29 @@ export function FichaForm({
               <span className="font-mono text-[10px] text-text-3">
                 {t("tokens", { prompt: tokens.prompt, completion: tokens.completion })}
               </span>
+              {readOnly && !editingArchived && (
+                <button
+                  type="button"
+                  onClick={() => setEditingArchived(true)}
+                  className="flex items-center gap-1.5 rounded-[2px] border-2 border-rule px-2 py-0.5 font-display text-[9.5px] font-bold uppercase tracking-[1px] text-rule transition hover:bg-sheet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  <Pencil size={11} strokeWidth={1.8} />
+                  {t("editArchived")}
+                </button>
+              )}
             </div>
             <div className="flex flex-col gap-3 px-4 py-3.5">
+              {editingArchived && (
+                <p
+                  role="note"
+                  className="border border-[#D9A400] bg-[#FBF3D9] px-3 py-2 font-display text-[10.5px] font-bold uppercase tracking-[1.2px] text-[#7A5C00]"
+                >
+                  {t("reembedWarning")}
+                </p>
+              )}
               <DocTypeSwitcher
                 value={ficha.doc_type}
-                disabled={readOnly}
+                disabled={!editable}
                 onChange={(type) => update({ ...ficha, doc_type: type })}
               />
               {FICHA_FIELDS[ficha.doc_type].map((spec) => (
@@ -202,7 +233,7 @@ export function FichaForm({
                   key={spec.path}
                   spec={spec}
                   value={ficha.fields[spec.path] ?? ""}
-                  disabled={readOnly}
+                  disabled={!editable}
                   onChange={(value) =>
                     update({ ...ficha, fields: { ...ficha.fields, [spec.path]: value } })
                   }
@@ -211,10 +242,10 @@ export function FichaForm({
               <ItemsGrid
                 docType={ficha.doc_type}
                 rows={ficha.items}
-                disabled={readOnly}
+                disabled={!editable}
                 onRowsChange={(rows) => update({ ...ficha, items: rows })}
               />
-              {!readOnly && <ItemsTotalAlert mismatch={mismatch} />}
+              {editable && <ItemsTotalAlert mismatch={mismatch} />}
               <div className="flex items-center justify-between border-t border-rule-soft pt-2">
                 <span className="font-display text-[10px] font-bold uppercase tracking-[1px] text-text-3">
                   {t("confidence")}
@@ -223,6 +254,18 @@ export function FichaForm({
                   {num(initial.confianza)}
                 </span>
               </div>
+              {auditGlimpse && (
+                <div className="overflow-hidden rounded-[3px] border border-carbon bg-carbon">
+                  <div className="flex h-[26px] items-center gap-2 bg-carbon px-3">
+                    <span className="font-display text-[9.5px] font-bold uppercase tracking-[1.4px] text-carbon-soft">
+                      {t("auditTitle", { count: auditGlimpse.count })}
+                    </span>
+                  </div>
+                  <p className="px-3 pb-2 font-mono text-[11px] text-carbon-text">
+                    {auditGlimpse.paths.join(" · ")}
+                  </p>
+                </div>
+              )}
               {!readOnly && (
                 <div className="flex items-center justify-end gap-3 border-t border-rule pt-3">
                   {confirmError && (

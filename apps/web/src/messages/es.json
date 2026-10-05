@@ -29,6 +29,7 @@
     "MASTER_KEY_MISSING": "El servidor no tiene clave maestra configurada: no se puede cifrar la clave. Defina DOCUMIND_MASTER_KEY en la API y vuelva a guardar.",
     "MASTER_KEY_INVALID": "La clave maestra del servidor no es válida. Regenere DOCUMIND_MASTER_KEY y vuelva a guardar la clave.",
     "EXTRACTION_CONFIRMED": "La ficha está archivada.",
+    "EXTRACTION_NOT_CONFIRMED": "La ficha sigue en borrador: confírmela antes de editar el archivado.",
     "unknown": "Algo salió mal. Inténtelo de nuevo."
   },
   "theme": { "toLight": "Cambiar a tema claro", "toDark": "Cambiar a tema oscuro" },
@@ -166,6 +167,9 @@
     "saveError": "NO SE PUDO GUARDAR — REINTENTE",
     "statusDraft": "BORRADOR",
     "statusConfirmed": "ARCHIVADA",
+    "editArchived": "EDITAR ARCHIVADA",
+    "reembedWarning": "LOS VECTORES SE REGENERARÁN AL GUARDAR",
+    "auditTitle": "AUDITORÍA DEL GUARDADO — {count} CAMPOS",
     "confidence": "CONFIANZA DE LA IA",
     "tokens": "TOKENS {prompt} · {completion}",
     "extractTitle": "HOJA SIN RELLENAR",
