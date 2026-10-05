@@ -170,6 +170,11 @@
     "editArchived": "EDIT ARCHIVED",
     "reembedWarning": "VECTORS WILL BE REGENERATED ON SAVE",
     "auditTitle": "SAVE AUDIT — {count} FIELDS",
+    "export": {
+      "menu": "EXPORT",
+      "ficha": "SHEET (.JSON)",
+      "items": "ITEMS (.CSV)"
+    },
     "confidence": "AI CONFIDENCE",
     "tokens": "TOKENS {prompt} · {completion}",
     "extractTitle": "BLANK SHEET",

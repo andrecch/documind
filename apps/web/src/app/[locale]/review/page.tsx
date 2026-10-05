@@ -151,6 +151,7 @@ export default function ReviewPage() {
             initial={detail.extraction}
             readOnly={detail.status === "confirmed"}
             tokens={detail.tokens}
+            fieldAudit={detail.fieldAudit}
             onConfirmed={refreshDetail}
           />
         )}

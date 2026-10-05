@@ -1,10 +1,11 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil } from "lucide-react";
-import type { ExtractionResult } from "@documind/shared";
+import { Download, Pencil } from "lucide-react";
+import type { ExtractionResult, FieldAudit } from "@documind/shared";
 import { api, ApiError, type ExtractionDetail } from "@/lib/api";
 import { errorText } from "@/lib/error-text";
+import { downloadBlob, fichaJson, itemsCsv } from "@/lib/export";
 import {
   FICHA_FIELDS,
   fromExtraction,
@@ -66,6 +67,7 @@ export function FichaForm({
   initial,
   readOnly,
   tokens,
+  fieldAudit,
   onConfirmed,
 }: {
   docId: string;
@@ -73,6 +75,7 @@ export function FichaForm({
   initial: ExtractionResult;
   readOnly: boolean;
   tokens: { prompt: number; completion: number };
+  fieldAudit: FieldAudit | null;
   onConfirmed: () => void;
 }) {
   const t = useTranslations("review");
@@ -83,6 +86,7 @@ export function FichaForm({
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [editingArchived, setEditingArchived] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [auditGlimpse, setAuditGlimpse] = useState<{ count: number; paths: string[] } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<EditableFicha | null>(null);
@@ -155,6 +159,32 @@ export function FichaForm({
 
   const num = (n: number) => new Intl.NumberFormat(locale).format(n);
   const mismatch = itemsTotalsMismatch(ficha);
+  const exportBase = docName.replace(/\.[^.]+$/, "");
+
+  const handleExportJson = useCallback(() => {
+    setExportOpen(false);
+    downloadBlob(
+      fichaJson({
+        documentId: docId,
+        filename: docName,
+        docType: ficha.doc_type,
+        extraction: toExtraction(ficha, initial.confianza),
+        fieldAudit,
+        tokens,
+      }),
+      "application/json;charset=utf-8",
+      `${exportBase}.json`,
+    );
+  }, [docId, docName, ficha, initial.confianza, fieldAudit, tokens, exportBase]);
+
+  const handleExportCsv = useCallback(() => {
+    setExportOpen(false);
+    downloadBlob(
+      itemsCsv(ficha.doc_type, ficha.items),
+      "text/csv;charset=utf-8",
+      `${exportBase} - items.csv`,
+    );
+  }, [ficha, exportBase]);
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-bg">
@@ -203,6 +233,41 @@ export function FichaForm({
               <span className="font-mono text-[10px] text-text-3">
                 {t("tokens", { prompt: tokens.prompt, completion: tokens.completion })}
               </span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setExportOpen((open) => !open)}
+                  aria-expanded={exportOpen}
+                  className="flex items-center gap-1.5 rounded-[2px] border-2 border-rule px-2 py-0.5 font-display text-[9.5px] font-bold uppercase tracking-[1px] text-rule transition hover:bg-sheet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  <Download size={11} strokeWidth={1.8} />
+                  {t("export.menu")}
+                </button>
+                {exportOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-[calc(100%+2px)] z-10 flex flex-col overflow-hidden rounded-[3px] border border-rule bg-sheet shadow-sm"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleExportJson}
+                      className="text-left font-display text-[9.5px] font-bold uppercase tracking-[1px] text-rule transition hover:bg-band focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
+                    >
+                      {t("export.ficha")}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleExportCsv}
+                      disabled={ficha.items.length === 0}
+                      className="border-t border-rule-soft/60 text-left font-display text-[9.5px] font-bold uppercase tracking-[1px] text-rule transition hover:bg-band focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent disabled:opacity-40 disabled:hover:bg-sheet"
+                    >
+                      {t("export.items")}
+                    </button>
+                  </div>
+                )}
+              </div>
               {readOnly && !editingArchived && (
                 <button
                   type="button"

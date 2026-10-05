@@ -170,6 +170,11 @@
     "editArchived": "EDITAR ARCHIVADA",
     "reembedWarning": "LOS VECTORES SE REGENERARÁN AL GUARDAR",
     "auditTitle": "AUDITORÍA DEL GUARDADO — {count} CAMPOS",
+    "export": {
+      "menu": "EXPORTAR",
+      "ficha": "FICHA (.JSON)",
+      "items": "ÍTEMS (.CSV)"
+    },
     "confidence": "CONFIANZA DE LA IA",
     "tokens": "TOKENS {prompt} · {completion}",
     "extractTitle": "HOJA SIN RELLENAR",

@@ -24,6 +24,52 @@ async function uploadAndConfirm(page: Page, name: string): Promise<void> {
   await expect(page.getByText("ARCHIVADA", { exact: true })).toBeVisible({ timeout: 15_000 });
 }
 
+test("M3 parte B: export de ficha JSON y de ítems CSV en archivado read-only", async ({
+  page,
+}: {
+  page: Page;
+}) => {
+  const name = `m3x-${randomUUID()}.png`;
+  await uploadAndConfirm(page, name);
+
+  await expect(page.getByRole("button", { name: "EXPORTAR" })).toBeVisible();
+  const base = name.replace(/\.[^.]+$/, "");
+
+  await page.getByRole("button", { name: "EXPORTAR" }).click();
+  const [jsonDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("menuitem", { name: "FICHA (.JSON)" }).click(),
+  ]);
+  expect(jsonDownload.suggestedFilename()).toBe(`${base}.json`);
+  const jsonRaw = readFileSync(await jsonDownload.path(), "utf8");
+  const json = JSON.parse(jsonRaw) as {
+    doc_type: string;
+    filename: string;
+    confirmed_data: { numero: string; items: { descripcion: string }[] };
+    field_audit: Record<string, unknown> | null;
+    exported_at: string;
+  };
+  expect(json.doc_type).toBe("factura");
+  expect(json.filename).toBe(name);
+  expect(json.confirmed_data.numero).toBe("FAC-2026-0847");
+  expect(json.confirmed_data.items).toHaveLength(2);
+  expect(json.field_audit).toBeNull();
+  expect(new Date(json.exported_at).toISOString()).toBe(json.exported_at);
+
+  await page.getByRole("button", { name: "EXPORTAR" }).click();
+  const [csvDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("menuitem", { name: "ÍTEMS (.CSV)" }).click(),
+  ]);
+  expect(csvDownload.suggestedFilename()).toBe(`${base} - items.csv`);
+  const csv = readFileSync(await csvDownload.path(), "utf8");
+  expect(csv.startsWith("\uFEFF")).toBe(true);
+  const lines = csv.replace("\uFEFF", "").split("\r\n");
+  expect(lines).toHaveLength(3);
+  expect(lines[0]).toBe("DESCRIPCIÓN;CANT.;VALOR UNIT.;VALOR TOTAL");
+  expect(lines[1]).toContain("Instalación eléctrica");
+});
+
 async function readApi<T>(res: Response): Promise<T> {
   expect(res.status).toBe(200);
   return (await res.json()) as T;
