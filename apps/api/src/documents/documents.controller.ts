@@ -1,6 +1,8 @@
 import {
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Inject,
   NotFoundException,
   Param,
@@ -15,6 +17,7 @@ import { ApiBody, ApiConsumes, ApiNotFoundResponse, ApiOkResponse, ApiTags } fro
 import type { Response } from "express";
 import { DocumentsService } from "./documents.service";
 import {
+  DeletedDto,
   DocumentNotFoundDto,
   DocumentResponseDto,
   ListDocumentsQueryDto,
@@ -51,6 +54,15 @@ export class DocumentsController {
   async get(@Param("id") id: string): Promise<DocumentResponseDto> {
     const row = await this.documents.getOrFail(id);
     return this.documents.toDto(row);
+  }
+
+  @Delete(":id")
+  @HttpCode(200)
+  @ApiOkResponse({ type: DeletedDto })
+  @ApiNotFoundResponse({ type: DocumentNotFoundDto })
+  async delete(@Param("id") id: string): Promise<DeletedDto> {
+    await this.documents.remove(id);
+    return { ok: true };
   }
 
   @Get(":id/file")

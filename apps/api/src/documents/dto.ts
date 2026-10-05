@@ -67,3 +67,8 @@ export class DocumentNotFoundDto {
   @ApiProperty({ type: String })
   message!: string;
 }
+
+export class DeletedDto {
+  @ApiProperty({ type: Boolean })
+  ok!: boolean;
+}

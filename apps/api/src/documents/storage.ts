@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -30,5 +30,9 @@ export class FileStorage {
 
   absolutePath(storagePath: string): string {
     return path.join(this.rootDir, storagePath);
+  }
+
+  async remove(storagePath: string): Promise<void> {
+    await rm(this.absolutePath(storagePath), { force: true });
   }
 }

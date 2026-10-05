@@ -131,6 +131,12 @@ export class DocumentsService {
     return { row, absolutePath: this.storage.absolutePath(row.storagePath) };
   }
 
+  async remove(id: string): Promise<void> {
+    const row = await this.getOrFail(id);
+    await this.db.delete(dbSchema.documents).where(eq(dbSchema.documents.id, id));
+    await this.storage.remove(row.storagePath);
+  }
+
   toDto(row: typeof dbSchema.documents.$inferSelect): DocumentResponseDto {
     return {
       id: row.id,

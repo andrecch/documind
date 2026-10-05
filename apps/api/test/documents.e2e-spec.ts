@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
@@ -6,6 +7,7 @@ import { Test } from "@nestjs/testing";
 import type { AppPool } from "../src/database/drizzle";
 import { POOL } from "../src/database/database.module";
 import { AppModule } from "../src/app.module";
+import { DocumentsService } from "../src/documents/documents.service";
 
 const PNG_1PX = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -120,5 +122,54 @@ describe("documents endpoints", () => {
     expect(none.status).toBe(200);
     expect(none.body.total).toBe(0);
     expect(none.body.items).toHaveLength(0);
+  });
+
+  it("DELETE elimina en cascada, hace unlink del disco y re-DELETE da 404 (M3.1)", async () => {
+    const upload = await request(app.getHttpServer())
+      .post("/api/v1/documents")
+      .attach("file", PNG_1PX, `del-${randomUUID()}.png`);
+    expect(upload.status).toBe(201);
+    const id: string = upload.body.id;
+
+    const extract = await request(app.getHttpServer()).post(`/api/v1/documents/${id}/extract`);
+    expect(extract.status).toBe(201);
+    const confirm = await request(app.getHttpServer()).post(`/api/v1/documents/${id}/confirm`);
+    expect(confirm.status).toBe(200);
+    expect(confirm.body.chunksInserted).toBeGreaterThanOrEqual(1);
+
+    const row = await pool.query<{ storage_path: string }>(
+      "SELECT storage_path FROM documents WHERE id = $1",
+      [id],
+    );
+    const loStoragePath = row.rows[0]?.storage_path;
+    if (!loStoragePath) throw new Error("document row missing after upload");
+    const absolutePath = app.get(DocumentsService).storage.absolutePath(loStoragePath);
+    expect(existsSync(absolutePath)).toBe(true);
+
+    const del = await request(app.getHttpServer()).delete(`/api/v1/documents/${id}`);
+    expect(del.status).toBe(200);
+    expect(del.body).toEqual({ ok: true });
+
+    const after = await request(app.getHttpServer()).get(`/api/v1/documents/${id}`);
+    expect(after.status).toBe(404);
+    expect(after.body.code).toBe("DOCUMENT_NOT_FOUND");
+
+    const chunks = await pool.query<{ n: number }>(
+      "SELECT count(*)::int AS n FROM document_chunks WHERE document_id = $1",
+      [id],
+    );
+    expect(chunks.rows[0]?.n ?? -1).toBe(0);
+    const revisions = await pool.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM extraction_revisions r
+         JOIN extractions e ON r.extraction_id = e.id
+        WHERE e.document_id = $1`,
+      [id],
+    );
+    expect(revisions.rows[0]?.n ?? -1).toBe(0);
+    expect(existsSync(absolutePath)).toBe(false);
+
+    const redelete = await request(app.getHttpServer()).delete(`/api/v1/documents/${id}`);
+    expect(redelete.status).toBe(404);
+    expect(redelete.body.code).toBe("DOCUMENT_NOT_FOUND");
   });
 });
